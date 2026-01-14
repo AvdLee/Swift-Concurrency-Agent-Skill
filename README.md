@@ -34,7 +34,45 @@ Based on the comprehensive [Swift Concurrency Course](https://www.swiftconcurren
 5) Use the skill in your AI agent, for example:  
    > Use the swift concurrency skill and analyze the current project for Swift Concurrency improvements
 
-### Option B: Manual install
+### Option B: Claude Code Plugin
+
+#### Personal Usage
+
+To install this Skill for your personal use in Claude Code:
+
+1. Add the marketplace:
+   ```bash
+   /plugin marketplace add AvdLee/Swift-Concurrency-Agent-Skill
+   ```
+
+2. Install the Skill:
+   ```bash
+   /plugin install swift-concurrency@swift-concurrency-agent-skill
+   ```
+
+#### Project Configuration
+
+To automatically provide this Skill to everyone working in a repository, configure the repository's `.claude/settings.json`:
+
+```json
+{
+  "enabledPlugins": {
+    "swift-concurrency@swift-concurrency-agent-skill": true
+  },
+  "extraKnownMarketplaces": {
+    "swift-concurrency-agent-skill": {
+      "source": {
+        "source": "github",
+        "repo": "AvdLee/Swift-Concurrency-Agent-Skill"
+      }
+    }
+  }
+}
+```
+
+When team members open the project, Claude Code will prompt them to install the Skill.
+
+### Option C: Manual install
 1) **Clone** this repository.  
 2) **Install or symlink** the `swift-concurrency/` folder following your tool’s official skills installation docs (see links below).  
 3) **Use your AI tool** as usual and ask it to use the “swift-concurrency” skill for Swift Concurrency tasks.
