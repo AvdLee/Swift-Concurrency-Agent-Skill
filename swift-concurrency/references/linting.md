@@ -162,29 +162,3 @@ excluded:
 ```
 
 
-## Common Anti-patterns to Avoid
-
-### Anti-pattern: Dummy await to silence lint
-```swift
-// BAD: Adding fake suspension
-func fetch() async {
-    await Task.yield() // Just to silence async_without_await
-    performSync()
-}
-```
-
-### Anti-pattern: Blanket @MainActor
-```swift
-// BAD: Everything on MainActor to silence warnings
-@MainActor
-class NetworkService { // Network code doesn't need MainActor
-    func fetch() async { ... }
-}
-```
-
-### Anti-pattern: Overly broad @unchecked Sendable
-```swift
-// BAD: No safety invariant documented
-extension URLSession: @unchecked Sendable {} // Already Sendable in SDK
-```
-
