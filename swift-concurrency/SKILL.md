@@ -29,12 +29,6 @@ When analyzing Swift projects for concurrency issues:
    - Use `Grep` for `SWIFT_STRICT_CONCURRENCY` or `SWIFT_DEFAULT_ACTOR_ISOLATION` in `.pbxproj` files
    - Use `Grep` for `SWIFT_UPCOMING_FEATURE_` to find enabled upcoming features
 
-2. **Code Search Patterns**
-   - `@MainActor` usage: `Grep` for `@MainActor`
-   - Actor definitions: `Grep` for `^actor\s+`
-   - Async functions: `Grep` for `func.*async`
-   - Sendable conformance: `Grep` for `: Sendable` or `@Sendable`
-   - Task usage: `Grep` for `Task\s*\{` or `Task\.detached`
 
 3. **Build Verification**
    - Use Xcode build tools to verify concurrency changes compile cleanly
