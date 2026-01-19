@@ -161,20 +161,6 @@ excluded:
   - Pods/
 ```
 
-## Integration with Strict Concurrency
-
-SwiftLint rules complement but don't replace compiler checks. For full coverage:
-
-1. **Enable strict concurrency in build settings**
-   - `SWIFT_STRICT_CONCURRENCY = complete`
-
-2. **Use SwiftLint for style/pattern enforcement**
-   - Catches async-without-await anti-patterns
-   - Enforces delegate patterns
-
-3. **Address compiler warnings first**
-   - Compiler catches actual safety issues
-   - SwiftLint catches style/convention issues
 
 ## Common Anti-patterns to Avoid
 
