@@ -1,0 +1,59 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "swift-concurrency-agent-skill",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Antoine van der Lee",
+    "email": "contact@avanderlee.com"
+  },
+  "metadata": {
+    "description": "Expert guidance on Swift Concurrency: async/await, actors, tasks, Sendable conformance, and Swift 6 migration patterns."
+  },
+  "plugins": [
+    {
+      "name": "swift-concurrency",
+      "description": "Expert guidance on Swift Concurrency best practices, patterns, and implementation. Covers async/await, actors, tasks, Sendable conformance, data race prevention, and Swift 6 migration strategies.",
+      "repository": "https://github.com/AvdLee/Swift-Concurrency-Agent-Skill",
+      "version": "1.0.0",
+      "author": {
+        "name": "Antoine van der Lee",
+        "email": "contact@avanderlee.com"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "swift",
+        "concurrency",
+        "async-await",
+        "actors",
+        "sendable",
+        "swift6",
+        "data-races",
+        "threading",
+        "task-groups",
+        "main-actor",
+        "core-data",
+        "migration",
+        "ios",
+        "macos",
+        "apple"
+      ],
+      "tags": [
+        "swift",
+        "concurrency",
+        "async-await",
+        "actors",
+        "sendable",
+        "swift6",
+        "data-races",
+        "threading",
+        "apple-platforms"
+      ],
+      "source": "./",
+      "skills": [
+        "./swift-concurrency"
+      ],
+      "strict": false
+    }
+  ]
+}
