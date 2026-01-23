@@ -1,0 +1,32 @@
+name: Validate Agent Skill
+
+on:
+  pull_request:
+    paths:
+      - "swift-concurrency/SKILL.md"
+      - "swift-concurrency/references/**"
+      - ".github/scripts/validate-skill.js"
+      - ".github/workflows/validate-agent-skill.yml"
+
+jobs:
+  validate-agent-skill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin "${{ github.base_ref }}"
+
+      - name: Validate skill changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node .github/scripts/validate-skill.js
