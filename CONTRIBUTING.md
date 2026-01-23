@@ -50,7 +50,7 @@ The best way to contribute is to use Claude with the [skill-creator skill](https
 - ✅ Correct file organization
 - ✅ Follows best practices from Anthropic's guidelines
 
-### Option 2: Use Claude Without the skill-creator Skill
+### Option 2: Use Claude Without the skill-creator skill
 
 If you don't have access to the skill-creator skill, you can still use Claude (or other AI assistants) to help:
 
