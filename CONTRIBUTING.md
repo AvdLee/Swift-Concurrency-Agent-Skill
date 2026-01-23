@@ -31,7 +31,7 @@ The best way to contribute is to use Claude with the [skill-creator skill](https
 1. **Install the skill-creator skill** in your Claude-compatible tool (Claude.ai, Cursor, etc.)
    ```bash
    # If using skills.sh
-   npx skills add https://github.com/anthropics/skills/tree/main/skills/skill-creator
+   npx skills add https://github.com/anthropics/skills --skill skill-creator
    ```
 
 2. **Ask Claude to help with your contribution:**
