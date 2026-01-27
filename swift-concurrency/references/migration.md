@@ -661,7 +661,8 @@ struct SearchView: View {
 ```swift
 import AsyncAlgorithms
 
-final class ArticleSearcher: @Observable {
+@Observable
+final class ArticleSearcher {
     @MainActor private(set) var results: [Article] = []
     private var searchQueryContinuation: AsyncStream<String>.Continuation?
 
@@ -736,7 +737,8 @@ final class NotificationObserver: ObservableObject {
 **After: Standard Library Notifications**
 
 ```swift
-final class NotificationObserver: @Observable {
+@Observable
+final class NotificationObserver {
     @MainActor private(set) var notifications: [AppNotification] = []
 
     func startObserving() {
@@ -792,7 +794,8 @@ final class MultiSourceLoader: ObservableObject {
 ```swift
 import AsyncAlgorithms
 
-final class MultiSourceLoader: @Observable {
+@Observable
+final class MultiSourceLoader {
     @MainActor private(set) var items: [Item] = []
 
     func loadFromAllSources() async {

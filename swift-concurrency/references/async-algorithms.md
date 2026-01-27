@@ -94,7 +94,8 @@ Wait for inactivity before emitting. Use for rapid inputs like search fields.
 ```swift
 import AsyncAlgorithms
 
-final class ArticleSearcher: @Observable {
+@Observable
+final class ArticleSearcher {
     @MainActor private(set) var results: [Article] = []
     private var searchQueryContinuation: AsyncStream<String>.Continuation?
 
@@ -208,9 +209,9 @@ Emit values at regular intervals. Use for periodic refresh or countdown timers.
 ```swift
 import AsyncAlgorithms
 
-@MainActor
-final class FeedViewModel: @Observable {
-    @Published private(set) var articles: [Article] = []
+@MainActor @Observable
+final class FeedViewModel {
+    private(set) var articles: [Article] = []
     private var refreshTask: Task<Void, Never>?
 
     func startAutoRefresh() {
@@ -645,7 +646,8 @@ final class ArticleSearcher: ObservableObject {
 ```swift
 import AsyncAlgorithms
 
-final class ArticleSearcher: @Observable {
+@Observable
+final class ArticleSearcher {
     @MainActor private(set) var results: [Article] = []
     private var searchQueryContinuation: AsyncStream<String>.Continuation?
 
@@ -709,7 +711,8 @@ final class ArticleLoader: ObservableObject {
 ```swift
 import AsyncAlgorithms
 
-final class ArticleLoader: @Observable {
+@Observable
+final class ArticleLoader {
     @MainActor private(set) var items: [Item] = []
 
     func loadAllSourcesParallel() async {
