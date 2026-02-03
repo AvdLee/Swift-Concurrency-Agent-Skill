@@ -24,6 +24,5 @@
     "ios",
     "macos",
     "apple"
-  ],
-  "skills": ["./swift-concurrency"]
+  ]
 }
