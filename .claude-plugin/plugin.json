@@ -1,6 +1,6 @@
 {
   "name": "swift-concurrency",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Expert guidance on Swift Concurrency best practices, patterns, and implementation. Covers async/await, actors, tasks, Sendable conformance, data race prevention, and Swift 6 migration strategies.",
   "author": {
     "name": "Antoine van der Lee",
