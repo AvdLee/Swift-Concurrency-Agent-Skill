@@ -53,7 +53,7 @@
       "skills": [
         "./swift-concurrency"
       ],
-      "strict": false
+      "strict": true
     }
   ]
 }
