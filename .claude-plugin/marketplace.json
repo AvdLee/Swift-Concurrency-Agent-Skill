@@ -51,7 +51,7 @@
       ],
       "source": "./",
       "skills": [
-        "./swift-concurrency"
+        "./skills/swift-concurrency"
       ],
       "strict": false
     }
