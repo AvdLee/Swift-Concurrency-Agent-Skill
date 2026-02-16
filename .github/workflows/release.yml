@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.0.2)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate version input
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version '$VERSION'. Expected format like 1.0.2."
+            exit 1
+          fi
+
+      - name: Fail if tag already exists
+        run: |
+          set -euo pipefail
+
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "Error: Tag $VERSION already exists. Refusing to re-release the same version."
+            exit 1
+          fi
+
+      - name: Fail if version is not higher than latest release
+        run: |
+          set -euo pipefail
+
+          latest_tag="$(git tag -l '[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
+          if [[ -z "$latest_tag" ]]; then
+            echo "No existing semver tags found. Proceeding with $VERSION."
+            exit 0
+          fi
+
+          latest_version="$latest_tag"
+
+          if [[ "$VERSION" == "$latest_version" ]]; then
+            echo "Error: Version $VERSION equals latest released version $latest_version. Use a higher version."
+            exit 1
+          fi
+
+          greatest="$(printf '%s\n%s\n' "$latest_version" "$VERSION" | sort -V | tail -n 1)"
+          if [[ "$greatest" != "$VERSION" ]]; then
+            echo "Error: Version $VERSION must be higher than latest released version $latest_version."
+            exit 1
+          fi
+
+      - name: Bump plugin.json version
+        run: |
+          set -euo pipefail
+
+          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > .claude-plugin/plugin.json.tmp
+          if [ -s .claude-plugin/plugin.json.tmp ]; then
+            mv .claude-plugin/plugin.json.tmp .claude-plugin/plugin.json
+          else
+            echo "Error: Failed to generate updated .claude-plugin/plugin.json"
+            exit 1
+          fi
+
+      - name: Bump marketplace.json versions
+        run: |
+          set -euo pipefail
+
+          jq --arg v "$VERSION" '.version = $v | .plugins[0].version = $v' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+          if [ -s .claude-plugin/marketplace.json.tmp ]; then
+            mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+          else
+            echo "Error: Failed to generate updated .claude-plugin/marketplace.json"
+            exit 1
+          fi
+
+      - name: Commit and push version bump
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet .claude-plugin/plugin.json .claude-plugin/marketplace.json; then
+            echo "Error: No changes detected after version bump. Is the repo already at version $VERSION?"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugin.json .claude-plugin/marketplace.json
+          git commit -m "Bump version to $VERSION"
+          git push
+
+      - name: Create tag and GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          generate_release_notes: true
