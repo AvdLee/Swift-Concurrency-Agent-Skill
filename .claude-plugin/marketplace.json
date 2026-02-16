@@ -49,11 +49,7 @@
         "threading",
         "apple-platforms"
       ],
-      "source": "./",
-      "skills": [
-        "./swift-concurrency"
-      ],
-      "strict": false
+      "source": "./"
     }
   ]
 }
