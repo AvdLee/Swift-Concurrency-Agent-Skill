@@ -18,6 +18,7 @@ Based on the comprehensive [Swift Concurrency Course](https://www.swiftconcurren
 ## See also my other skills:
 - [SwiftUI Expert](https://github.com/AvdLee/SwiftUI-Agent-Skill)
 - [Core Data Expert](https://github.com/AvdLee/Core-Data-Agent-Skill)
+- [Swift Testing Expert](https://github.com/AvdLee/Swift-Testing-Agent-Skill)
 
 ## How to Use This Skill
 
