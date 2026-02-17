@@ -79,7 +79,7 @@ Prefer edits that preserve behavior while satisfying data-race safety.
 
 - **UI-bound types**: isolate the type or specific members to `@MainActor` (justify why UI-bound).
 - **Global/static mutable state**: move into an `actor` or isolate to `@MainActor` if UI-only.
-- **Background work**: move expensive work into a `nonisolated` async function marked `@concurrent`, or use an `actor` to guard mutable state.
+- **Background work**: for work that should always hop off the caller’s isolation, move expensive work into an `async` function marked `@concurrent`; for work that doesn’t touch isolated state but can inherit the caller’s isolation (for example with `NonisolatedNonsendingByDefault`), use `nonisolated` without `@concurrent`, or use an `actor` to guard mutable state.
 - **Sendable errors**: prefer immutable/value types; avoid `@unchecked Sendable` unless you can prove and document thread safety.
 
 ## Quick Fix Playbook (Common Diagnostics -> Minimal Fix)
