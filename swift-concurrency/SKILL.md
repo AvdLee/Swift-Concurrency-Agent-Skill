@@ -150,7 +150,8 @@ When a developer needs concurrency guidance, follow this decision tree:
 - "Class property 'current' is unavailable from asynchronous contexts" (Thread APIs)
   - Use `references/threading.md` to avoid thread-centric debugging and rely on isolation + Instruments
 - "Actor-isolated type does not conform to protocol" (protocol conformance errors)
-  - Use isolated conformance: `extension Foo: @MainActor SomeProtocol` or refactor requirements to `nonisolated` where safe
+  - First: determine whether the protocol requirements must execute on the actor (for example, UI work on `@MainActor`) or can safely be `nonisolated`.
+  - Then: follow the Quick Fix Playbook entry for actor-isolated protocol conformance and `references/actors.md` for implementation patterns (isolated conformances, `nonisolated` requirements, and escalation steps).
 - XCTest async errors like "wait(...) is unavailable from asynchronous contexts"
   - Use `references/testing.md` (`await fulfillment(of:)` and Swift Testing patterns)
 - Core Data concurrency warnings/errors
