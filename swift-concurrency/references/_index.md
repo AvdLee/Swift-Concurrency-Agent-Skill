@@ -1,84 +1,48 @@
 # Reference Index
 
-Quick navigation for Swift Concurrency topics.
+Quick navigation for the Swift Concurrency skill.
 
-## Fundamentals
+## Foundations
 
-| File | Description |
-|------|-------------|
-| `async-await-basics.md` | Core async/await patterns, execution order, async let |
-| `tasks.md` | Task lifecycle, cancellation, priorities, task groups |
-| `glossary.md` | Term definitions for quick lookup |
+| File | Use it for |
+|---|---|
+| `async-await-basics.md` | closure-to-async bridges and foundational async/await usage |
+| `tasks.md` | `Task`, cancellation, task groups, structured vs unstructured work |
+| `actors.md` | actor isolation, `@MainActor`, reentrancy, isolated conformances |
+| `sendable.md` | `Sendable`, `@Sendable`, region isolation, escape hatches |
+| `threading.md` | execution model, suspension points, Swift 6.2 isolation behavior |
 
-## Thread Safety & Isolation
+## Streams
 
-| File | Description |
-|------|-------------|
-| `actors.md` | Actor isolation, @MainActor, global actors, reentrancy |
-| `sendable.md` | Sendable conformance, value/reference types, @unchecked |
-| `threading.md` | Thread/task relationship, suspension points, isolation domains |
+| File | Use it for |
+|---|---|
+| `async-sequences.md` | deciding between `AsyncSequence`, `AsyncStream`, and one-shot async APIs |
+| `async-algorithms.md` | debounce, throttle, merge, `combineLatest`, channels, timers |
 
-## Advanced Patterns
+## Applied Topics
 
-| File | Description |
-|------|-------------|
-| `async-sequences.md` | AsyncSequence, AsyncStream, bridging callbacks |
-| `async-algorithms.md` | AsyncAlgorithms package, Combine migration, time-based operators |
-| `memory-management.md` | Retain cycles in tasks, cleanup patterns |
-| `performance.md` | Profiling with Instruments, optimization strategies |
+| File | Use it for |
+|---|---|
+| `testing.md` | Swift Testing first, XCTest fallback, leak checks |
+| `performance.md` | Instruments workflow, actor hops, suspension cost |
+| `memory-management.md` | retain cycles, long-lived tasks, cleanup |
+| `core-data.md` | `NSManagedObjectID`, `perform`, default isolation conflicts |
 
-## Integration & Migration
+## Migration and Tooling
 
-| File | Description |
-|------|-------------|
-| `core-data.md` | NSManagedObject patterns, custom executors |
-| `migration.md` | Swift 6 migration strategy, @preconcurrency |
-| `testing.md` | XCTest async patterns, Swift Testing |
-| `linting.md` | SwiftLint rules, warning suppression strategies |
+| File | Use it for |
+|---|---|
+| `migration.md` | rollout order, build settings, migration guardrails |
+| `linting.md` | concurrency-focused lint rules |
+| `glossary.md` | quick definitions |
 
-## Quick Links by Problem
+## Problem Router
 
-### "I need to..."
-
-- **Start using async/await** → `async-await-basics.md`
-- **Run tasks in parallel** → `tasks.md` (async let, TaskGroup)
-- **Protect shared state** → `actors.md`
-- **Pass data between actors** → `sendable.md`
-- **Bridge callback APIs** → `async-sequences.md` (AsyncStream)
-- **Replace Combine operators** → `async-algorithms.md` (debounce, throttle, merge)
-- **Debug threading issues** → `threading.md`
-- **Fix memory leaks** → `memory-management.md`
-- **Migrate to Swift 6** → `migration.md`
-- **Test async code** → `testing.md`
-- **Optimize performance** → `performance.md`
-
-### "I'm getting an error about..."
-
-- **"non-Sendable type"** → `sendable.md`, `threading.md`
-- **"Main actor-isolated"** → `actors.md`, `threading.md`
-- **"async_without_await"** → `linting.md`
-- **Core Data warnings** → `core-data.md`
-- **XCTest async errors** → `testing.md`
-
-### "I want to migrate..."
-
-- **Combine/RxSwift to Swift Concurrency** → `async-algorithms.md`, `migration.md`
-
-## File Statistics
-
-| File | Lines | Last Major Topic |
-|------|-------|------------------|
-| `migration.md` | ~860 | Swift 6, @preconcurrency, AsyncAlgorithms |
-| `async-algorithms.md` | ~800 | Combine migration, operators |
-| `actors.md` | ~640 | Custom executors, Mutex |
-| `async-sequences.md` | ~715 | AsyncStream bridging, AsyncAlgorithms vs stdlib |
-| `tasks.md` | ~605 | Task groups, cancellation |
-| `sendable.md` | ~580 | Region isolation |
-| `performance.md` | ~575 | Instruments profiling |
-| `testing.md` | ~565 | Swift Testing |
-| `memory-management.md` | ~540 | Task cleanup |
-| `core-data.md` | ~535 | NSManagedObjectID |
-| `threading.md` | ~450 | Isolation domains |
-| `async-await-basics.md` | ~250 | URLSession patterns |
-| `linting.md` | ~200 | SwiftLint config |
-| `glossary.md` | ~130 | Term definitions |
+- "I need to fix a compiler error quickly" -> `../SKILL.md`
+- "I need to replace a callback with async/await" -> `async-await-basics.md`
+- "I need to protect shared mutable state" -> `actors.md`
+- "I need to pass data safely across boundaries" -> `sendable.md`
+- "I need stream operators" -> `async-algorithms.md`
+- "I need to understand why code runs where it runs" -> `threading.md`
+- "I need to stop a leak or lifetime issue" -> `memory-management.md`
+- "I need to migrate to Swift 6" -> `migration.md`
