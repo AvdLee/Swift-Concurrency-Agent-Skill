@@ -7,6 +7,13 @@ const REFERENCES_DIR = path.join(process.cwd(), "swift-concurrency/references");
 const DEFAULT_BASE_REF = "main";
 
 const execGit = (command) => execSync(command, { encoding: "utf8" }).trim();
+const tryExecGit = (command) => {
+  try {
+    return execGit(command);
+  } catch {
+    return null;
+  }
+};
 
 const getEventPayload = () => {
   const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -22,10 +29,18 @@ const getBaseRef = (eventPayload) =>
   DEFAULT_BASE_REF;
 
 const getReferenceChanges = (baseRef) => {
-  const diff = execGit(
+  const diff = tryExecGit(
     `git diff origin/${baseRef}...HEAD --name-status -- "swift-concurrency/references"`
   );
-  return diff;
+
+  if (diff !== null) {
+    return diff;
+  }
+
+  console.warn(
+    `Could not diff against origin/${baseRef}. Assuming reference changes are present.`
+  );
+  return "__ASSUME_REFERENCE_CHANGES__";
 };
 
 const parseDescriptions = (blockContent) => {

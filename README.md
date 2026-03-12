@@ -151,21 +151,23 @@ This skill gives your AI coding tool comprehensive Swift Concurrency guidance. I
 
 ```
 swift-concurrency/
-├── SKILL.md                    # Main skill file with decision trees
+├── SKILL.md                # Main skill file with decision trees
 └── references/
-    ├── async-await-basics.md   # Fundamentals of async/await syntax
-    ├── tasks.md                # Task lifecycle, cancellation, priorities
-    ├── sendable.md             # Isolation domains and Sendable conformance
+    ├── _index.md               # Quick reference router for the docs
     ├── actors.md               # Actor isolation, global actors, reentrancy
+    ├── async-algorithms.md     # Debounce, throttle, merge, combineLatest, timers
+    ├── async-await-basics.md   # Fundamentals of async/await syntax
     ├── async-sequences.md      # AsyncSequence and AsyncStream patterns
-    ├── threading.md            # Threads vs tasks, suspension points
-    ├── memory-management.md    # Retain cycles, weak self, isolated deinit
     ├── core-data.md            # Core Data integration patterns
-    ├── performance.md          # Optimization with Xcode Instruments
-    ├── testing.md              # Testing concurrent code
-    ├── migration.md            # Step-by-step Swift 6 migration guide
     ├── glossary.md             # Terms & concepts for Swift Concurrency
-    └── linting.md              # Linting rules for strict concurrency
+    ├── linting.md              # Linting rules for strict concurrency
+    ├── memory-management.md    # Retain cycles, weak self, isolated deinit
+    ├── migration.md            # Step-by-step Swift 6 migration guide
+    ├── performance.md          # Optimization with Xcode Instruments
+    ├── sendable.md             # Isolation domains and Sendable conformance
+    ├── tasks.md                # Task lifecycle, cancellation, priorities
+    ├── testing.md              # Testing concurrent code
+    └── threading.md            # Threads vs tasks, suspension points
 ```
 
 ## Contributing
