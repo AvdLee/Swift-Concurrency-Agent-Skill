@@ -109,7 +109,7 @@ let images = await withTaskGroup(of: UIImage?.self) { group in
 
 Use `withThrowingTaskGroup` when child failures should propagate.
 
-**Critical**: errors in child tasks do not automatically fail the group. You must iterate (e.g. `for try await` or `group.next()`) to surface them. Without iteration, child errors are silently swallowed.
+**Important**: in a throwing task group, unhandled child errors propagate when the group scope exits. Iterate with `for try await` or `group.next()` to detect errors earlier and cancel unnecessary in-flight work instead of waiting for scope exit.
 
 Use `addTaskUnlessCancelled` to prevent adding work to an already-cancelled group.
 

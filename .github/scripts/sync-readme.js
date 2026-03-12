@@ -10,7 +10,8 @@ const execGit = (command) => execSync(command, { encoding: "utf8" }).trim();
 const tryExecGit = (command) => {
   try {
     return execGit(command);
-  } catch {
+  } catch (error) {
+    console.warn(`git command failed: ${error.message}`);
     return null;
   }
 };

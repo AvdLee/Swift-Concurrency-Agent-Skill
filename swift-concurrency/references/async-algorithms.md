@@ -163,7 +163,7 @@ Avoid these:
 | `.combineLatest` | `combineLatest()` |
 | `.zip` | `zip()` |
 | `.removeDuplicates` | `removeDuplicates()` |
-| `.share()` | `AsyncChannel` (backpressure-aware multi-consumer) |
+| `.share()` | No direct equivalent. `AsyncChannel` is point-to-point (one consumer gets each value), not broadcast. For multicast, use multiple `AsyncStream` continuations or a custom broadcast wrapper. |
 | `.flatMap` | `TaskGroup` (not a stream operator) |
 | `.receive(on:)` | `@MainActor` or `Task` with explicit isolation |
 | `.eraseToAnyPublisher()` | `any AsyncSequence<Element, Error>` |
