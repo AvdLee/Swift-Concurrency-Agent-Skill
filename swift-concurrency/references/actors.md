@@ -1,6 +1,26 @@
 # Actors
 
-Data isolation patterns and thread-safe state management in Swift.
+Use this when:
+
+- You need to protect class-based mutable state from concurrent access.
+- You are choosing between `actor`, `@MainActor`, `nonisolated`, or `Mutex`.
+- You are resolving protocol conformance issues on actor-isolated types.
+
+Skip this file if:
+
+- You mainly need to make a value safe to transfer across boundaries. Use `sendable.md`.
+- You are debugging execution threads or suspension behavior. Use `threading.md`.
+
+Jump to:
+
+- Actor Isolation
+- Global Actors / @MainActor
+- Isolated vs Nonisolated
+- Actor Reentrancy
+- Isolated Deinit / Isolated Conformances (Swift 6.2+)
+- `#isolation` Macro
+- Mutex: Alternative to Actors
+- Decision Tree
 
 ## What is an Actor?
 

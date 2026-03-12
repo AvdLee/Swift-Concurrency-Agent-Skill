@@ -109,6 +109,23 @@ let images = await withTaskGroup(of: UIImage?.self) { group in
 
 Use `withThrowingTaskGroup` when child failures should propagate.
 
+**Critical**: errors in child tasks do not automatically fail the group. You must iterate (e.g. `for try await` or `group.next()`) to surface them. Without iteration, child errors are silently swallowed.
+
+Use `addTaskUnlessCancelled` to prevent adding work to an already-cancelled group.
+
+### Discarding Task Groups
+
+Use `withDiscardingTaskGroup` / `withThrowingDiscardingTaskGroup` for fire-and-forget work where results are not needed:
+
+```swift
+await withDiscardingTaskGroup { group in
+    group.addTask { await logEvent("login") }
+    group.addTask { await preloadCache() }
+}
+```
+
+More memory efficient than regular task groups because results are not stored. First error in the throwing variant cancels the group and propagates.
+
 ## Structured vs Unstructured
 
 Prefer structured work when the parent owns the lifetime of the child work.

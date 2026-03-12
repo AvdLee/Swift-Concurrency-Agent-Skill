@@ -29,6 +29,13 @@ Jump to:
 
 Install/import only when the package is already part of the project and the extra operators are warranted.
 
+### Installation
+
+```swift
+.package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0")
+// target dependency: .product(name: "AsyncAlgorithms", package: "swift-async-algorithms")
+```
+
 ## Operator Map
 
 | Operator | Use when | Avoid when |
@@ -38,7 +45,12 @@ Install/import only when the package is already part of the project and the extr
 | `merge` | Values from multiple independent sources can interleave | You need paired output |
 | `combineLatest` | Each output depends on the latest value from several sources | You need one-to-one pairing |
 | `zip` | Values should be paired in order | Sources produce at very different rates |
-| `AsyncChannel` | You need backpressure or multi-producer coordination | A plain `AsyncStream` is enough |
+| `chain` | Concatenate sequences end-to-end in order | Interleaved output is acceptable (use `merge`) |
+| `removeDuplicates` | Suppress consecutive duplicate values | You need to deduplicate across non-consecutive positions |
+| `chunks` / `chunked` | Batch values by count, time, or signal | Every value must be processed individually |
+| `compacted` | Strip `nil` from an async sequence of optionals | The sequence is not optional-typed |
+| `adjacentPairs` | Compare each value with the previous one | You need wider windows |
+| `AsyncChannel` / `AsyncThrowingChannel` | You need backpressure or multi-producer coordination | A plain `AsyncStream` is enough |
 | `AsyncTimerSequence` | You need a structured timer stream | A single delayed sleep is enough |
 
 ## Minimal Patterns
@@ -140,6 +152,22 @@ Avoid these:
 - Rebuilding Combine/Rx style operators manually with shared mutable state.
 - Pulling in AsyncAlgorithms when plain `AsyncStream` or `.task(id:)` would be simpler.
 - Treating `AsyncChannel` as the default stream type; most one-producer flows can start with `AsyncStream`.
+
+## Combine Operator Mapping
+
+| Combine | AsyncAlgorithms / Swift Concurrency |
+|---|---|
+| `.debounce` | `debounce(for:)` |
+| `.throttle` | `throttle(for:)` |
+| `.merge` | `merge()` |
+| `.combineLatest` | `combineLatest()` |
+| `.zip` | `zip()` |
+| `.removeDuplicates` | `removeDuplicates()` |
+| `.share()` | `AsyncChannel` (backpressure-aware multi-consumer) |
+| `.flatMap` | `TaskGroup` (not a stream operator) |
+| `.receive(on:)` | `@MainActor` or `Task` with explicit isolation |
+| `.eraseToAnyPublisher()` | `any AsyncSequence<Element, Error>` |
+| `.concat` | `chain()` |
 
 ## Migration Note
 

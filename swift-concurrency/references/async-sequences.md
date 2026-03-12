@@ -37,6 +37,8 @@ for await value in values {
 
 Treat `for await` like any other long-lived async boundary: cancellation and lifetime still matter.
 
+**Important**: `AsyncStream` supports only one consumer. If multiple tasks iterate the same stream, values split between them unpredictably. Use `AsyncChannel` from AsyncAlgorithms when multiple consumers are needed.
+
 ## Prefer `AsyncStream` for Bridging
 
 Most custom stream work should start with `AsyncStream` or `AsyncThrowingStream`, not a hand-written `AsyncSequence`.
@@ -112,11 +114,13 @@ Guidelines:
 
 Only think about buffering when producer speed and consumer speed differ enough to matter.
 
-Rules of thumb:
+Available policies:
 
-- Start with the default buffering behavior.
-- Reach for buffering policies when dropped or delayed values matter.
-- If producer/consumer coordination matters more than buffering, consider `AsyncChannel` in `async-algorithms.md`.
+- `.unbounded` (default): buffers all values; risk of unbounded memory growth if consumer is slow.
+- `.bufferingNewest(n)`: keeps only the newest N values; drops oldest on overflow.
+- `.bufferingOldest(n)`: keeps only the oldest N values; drops newest on overflow.
+
+Start with the default. Reach for a bounded policy when dropped or delayed values matter. If producer/consumer coordination matters more than buffering, consider `AsyncChannel` in `async-algorithms.md`.
 
 ## When to Write a Custom `AsyncSequence`
 
@@ -138,6 +142,7 @@ Avoid these:
 - Forgetting `finish()` for finite producers.
 - Holding observers or delegates forever because `onTermination` is missing.
 - Using streams for one-shot APIs that should just be `async`.
+- Sharing a single `AsyncStream` between multiple consumers (values split unpredictably).
 
 ## Where to Go Next
 

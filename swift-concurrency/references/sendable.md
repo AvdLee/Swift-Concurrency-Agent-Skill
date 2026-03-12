@@ -1,6 +1,26 @@
 # Sendable
 
-Type safety patterns for sharing data across concurrency boundaries.
+Use this when:
+
+- A value or reference type must cross an isolation boundary safely.
+- You are resolving "non-Sendable type" compiler diagnostics.
+- You need to decide between value types, `@unchecked Sendable`, actors, or region-based isolation.
+
+Skip this file if:
+
+- The issue is about which actor should own the state. Use `actors.md`.
+- The issue is about how async functions execute. Use `threading.md`.
+
+Jump to:
+
+- Isolation Domains
+- Value Types (Structs, Enums)
+- Reference Types (Classes)
+- Functions and Closures (@Sendable)
+- @unchecked Sendable
+- Region-Based Isolation / `sending`
+- Global Variables
+- Decision Tree
 
 ## What is Sendable?
 

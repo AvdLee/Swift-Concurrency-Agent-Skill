@@ -41,7 +41,7 @@ Before interpreting diagnostics, confirm the target settings:
 | Strict concurrency | `SWIFT_STRICT_CONCURRENCY` or SwiftPM strict flags | Controls how aggressively Sendable and isolation rules are enforced. |
 | Default actor isolation | `SWIFT_DEFAULT_ACTOR_ISOLATION` or `.defaultIsolation(MainActor.self)` | Changes default ownership of declarations. |
 | `NonisolatedNonsendingByDefault` | upcoming feature flags | Changes how `nonisolated async` functions execute. |
-| Approachable Concurrency | Xcode / SwiftPM feature bundle | Enables a set of migration-oriented behaviors. Prefer understanding the underlying features. |
+| Approachable Concurrency | Xcode / SwiftPM feature bundle | Bundles: `DisableOutwardActorInference`, `GlobalActorIsolatedTypesUsability`, `InferIsolatedConformances`, `InferSendableFromCaptures`, `NonisolatedNonsendingByDefault`. Prefer enabling them individually first. |
 
 Settings-sensitive guidance:
 
@@ -60,7 +60,7 @@ Settings-sensitive guidance:
 
 ## Recommended Migration Order
 
-1. Update dependencies and tools first.
+1. Update dependencies and tools first. Use Xcode's migration tooling or `swift package migrate` for a first pass.
 2. Enable diagnostics without changing language mode yet when possible.
 3. Add async alternatives for important closure-based APIs.
 4. Fix one category at a time:
@@ -105,9 +105,9 @@ Why this is high leverage:
 
 Prefer a staged rollout:
 
-1. `Minimal`
-2. `Targeted`
-3. `Complete`
+1. **Minimal**: only checks code that explicitly adopts concurrency (`@Sendable`, `@MainActor`).
+2. **Targeted**: checks all code that adopts concurrency, including `Sendable` conformances.
+3. **Complete**: checks entire codebase (matches Swift 6 behavior).
 
 Treat each level like a checkpoint. Do not advance while the current level is noisy unless the noise is known and intentionally deferred.
 
@@ -171,6 +171,23 @@ Do not keep all migration strategy in this file. Route to the smallest deeper re
 - AsyncAlgorithms operators and FRP replacements -> `async-algorithms.md`
 - XCTest and Swift Testing fallout -> `testing.md`
 - Core Data isolation conflicts -> `core-data.md`
+
+## Concurrency-Safe Notifications (iOS 26+)
+
+Two new typed notification APIs replace untyped `NotificationCenter` patterns:
+
+- **`MainActorMessage`**: observer closure is guaranteed to run on `@MainActor`. Use for UI-driven notifications.
+- **`AsyncMessage`**: typed, Sendable notification for async observation. Use for cross-isolation notifications.
+
+```swift
+token = NotificationCenter.default.addObserver(
+    of: UIApplication.self, for: .didBecomeActive
+) { [weak self] message in
+    self?.handleActivation()
+}
+```
+
+These replace the common pattern of `NotificationCenter.default.notifications(named:)` with compile-time safety for isolation and typing.
 
 ## Anti-Patterns
 

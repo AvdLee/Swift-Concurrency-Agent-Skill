@@ -93,11 +93,14 @@ extension NSPersistentContainer {
 
 Default main-actor isolation can reduce migration noise in app code, but Core Data generated types can still create confusing boundaries.
 
+Common diagnostic: `Main actor-isolated initializer has different actor isolation from nonisolated overridden declaration`. Fix: set entity code generation to Manual/None and mark the generated class as `nonisolated`.
+
 Guidelines:
 
 - Isolate wrapper APIs and app-facing orchestration instead of assuming every managed object should be `@MainActor`.
 - Keep background mutation APIs explicit.
 - Avoid passing managed objects from main-actor code into background tasks.
+- For multi-context setups, enable `viewContext.automaticallyMergesChangesFromParent = true` to keep the view context in sync with background saves.
 
 ## Practical Store Shape
 
@@ -127,3 +130,7 @@ Avoid these:
 - Passing managed objects between contexts or actors.
 - Hiding Core Data ownership issues behind `@unchecked Sendable`.
 - Rewriting the entire persistence stack when `objectID` plus `perform` would solve the immediate problem.
+
+## Debugging
+
+Enable the Core Data concurrency assertions launch argument to catch cross-context violations at runtime: `-com.apple.CoreData.ConcurrencyDebug 1`.

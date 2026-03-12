@@ -84,11 +84,21 @@ try await withMainSerialExecutor {
 }
 ```
 
-If you do not have that helper, fall back to explicit `Task.yield()`, actor isolation, or suite serialization instead of adding arbitrary sleeps.
+**Critical**: `withMainSerialExecutor` does not work with parallel test execution. Mark the suite as serialized:
+
+```swift
+@Suite(.serialized)
+@MainActor
+final class ViewModelTests { ... }
+```
+
+If you do not have ConcurrencyExtras, fall back to explicit `Task.yield()`, actor isolation, or suite serialization instead of adding arbitrary sleeps.
 
 ## XCTest Fallback
 
-For legacy XCTest code, replace blocking wait APIs with async-aware variants:
+For legacy XCTest code, replace blocking wait APIs with async-aware variants.
+
+**Deadlock warning**: use `await fulfillment(of:)`, not `wait(for:timeout:)`. The blocking `wait` variant deadlocks when called from an async test method.
 
 ```swift
 final class ServiceTests: XCTestCase {

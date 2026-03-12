@@ -14,6 +14,7 @@ Skip this file if:
 Jump to:
 
 - Think in Isolation, Not Threads
+- Actor Reentrancy
 - Suspension Points
 - Swift 6.2-Era Behavior
 - Debugging
@@ -52,17 +53,73 @@ Implications:
 - Blocking APIs inside async code can still starve the pool.
 - Prefer async-native APIs and actor isolation over manual queue juggling.
 
+## Actor Reentrancy
+
+While an actor method is suspended at an `await`, other tasks can enter the actor and mutate state. This causes subtle bugs:
+
+```swift
+actor BankAccount {
+    var balance = 0
+
+    func deposit(amount: Int) async {
+        balance += amount          // balance is now 100
+        await logTransaction()     // suspension: another deposit can run here
+        balance += 10              // bonus -- but balance may have changed
+    }
+}
+```
+
+Two concurrent `deposit(amount: 100)` calls can produce `100 -> 200 -> 210 -> 220` instead of the expected `100 -> 110 -> 210 -> 220`.
+
+**Rule**: complete all critical state mutations before the next `await`. Move side effects (logging, networking) after the state is settled.
+
 ## Swift 6.2-Era Behavior
 
-The most migration-sensitive execution change is around `nonisolated async` functions.
+The most migration-sensitive execution change is how `nonisolated async` functions execute.
 
-When the relevant upcoming features are enabled:
+### Before (pre-Swift 6.2 behavior)
 
-- `nonisolated async` may inherit the caller's isolation.
-- Use `@concurrent` when the function should explicitly run concurrently instead of inheriting caller isolation.
-- Do not assume "nonisolated means background thread" without checking the active feature set.
+A `nonisolated async` function always hopped to the cooperative thread pool (background):
 
-Default actor isolation also matters:
+```swift
+nonisolated func process() async { /* always ran off MainActor */ }
+```
+
+### After (`NonisolatedNonsendingByDefault` enabled)
+
+The same function now inherits the caller's isolation by default:
+
+```swift
+nonisolated func process() async { /* runs on caller's actor, e.g. MainActor */ }
+```
+
+Common symptom: "my function used to run in the background, now it runs on MainActor and blocks the UI."
+
+### `@concurrent` -- opt into concurrent execution
+
+Use `@concurrent` when the function should explicitly hop off the caller's isolation:
+
+```swift
+@concurrent
+func processInBackground() async { /* always runs on cooperative pool */ }
+```
+
+### `nonisolated(nonsending)` -- the explicit form of the new default
+
+Marks a function as nonisolated but non-sending: it can inherit caller isolation without requiring its arguments or captures to be `Sendable`. This is the explicit spelling of the new default behavior.
+
+### Decision guide
+
+| Situation | Use |
+|---|---|
+| Work can safely stay on the caller's actor | plain `nonisolated` (new default) |
+| Work must run off the caller's actor | `@concurrent` |
+| You need the explicit nonsending annotation | `nonisolated(nonsending)` |
+| Feature flags are unknown | check the project settings before advising |
+
+Do not give pre-Swift-6.2 execution advice without confirming the active feature set.
+
+### Default actor isolation
 
 - `@MainActor` default isolation can reduce noise in app targets.
 - It changes ownership and diagnostics, so it is not just a cosmetic setting.

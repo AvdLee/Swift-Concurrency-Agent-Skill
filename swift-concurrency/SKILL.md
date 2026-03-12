@@ -8,9 +8,12 @@ description: 'Diagnose data races, convert callback-based code to async/await, i
 
 Before proposing a fix:
 
-1. Capture the exact diagnostic and offending symbol.
-2. Determine the isolation boundary: `@MainActor`, custom actor, actor instance isolation, or `nonisolated`.
-3. If the advice is migration-sensitive, inspect project settings first:
+1. Analyze `Package.swift` or `.pbxproj` to determine Swift language mode, strict concurrency level, default isolation, and upcoming features. Do this always, not only for migration work.
+2. Capture the exact diagnostic and offending symbol.
+3. Determine the isolation boundary: `@MainActor`, custom actor, actor instance isolation, or `nonisolated`.
+4. Confirm whether the code is UI-bound or intended to run off the main actor.
+
+Project settings that change concurrency behavior:
 
 | Setting | SwiftPM (`Package.swift`) | Xcode (`.pbxproj`) |
 |---|---|---|
@@ -61,6 +64,17 @@ Prefer changes that preserve behavior while satisfying data-race safety:
 - Background work: when work must hop off caller isolation, use an `async` API marked `@concurrent`; when work can safely inherit caller isolation, use `nonisolated` without `@concurrent`.
 - Sendability issues: prefer immutable values and explicit boundaries over `@unchecked Sendable`.
 
+## Concurrency Tool Selection
+
+| Need | Tool | Key Guidance |
+|---|---|---|
+| Single async operation | `async/await` | Default choice for sequential async work |
+| Fixed parallel operations | `async let` | Known count at compile time; auto-cancelled on throw |
+| Dynamic parallel operations | `withTaskGroup` | Unknown count; structured -- cancels children on scope exit |
+| Sync-to-async bridge | `Task { }` | Inherits actor context; use `Task.detached` only with documented reason |
+| Shared mutable state | `actor` | Prefer over locks/queues; keep isolated sections small |
+| UI-bound state | `@MainActor` | Only for truly UI-related code; justify isolation |
+
 ## Reference Router
 
 Open the smallest reference that matches the question:
@@ -94,7 +108,8 @@ When changing concurrency code:
 3. Run tests, especially actor-, lifetime-, and cancellation-sensitive tests.
 4. Use Instruments for performance claims instead of guessing.
 5. Verify deallocation and cancellation behavior for long-lived tasks.
-6. Never use semaphores or ad hoc locking in async contexts when actor isolation or `Mutex` would express ownership more safely.
+6. Check `Task.isCancelled` in long-running operations.
+7. Never use semaphores or ad hoc locking in async contexts when actor isolation or `Mutex` would express ownership more safely.
 
 Course links are optional deeper learning only. Use them sparingly.
 
