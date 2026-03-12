@@ -73,6 +73,8 @@ await withCheckedContinuation { continuation in
 
 When state transitions are timing-sensitive, make scheduling deterministic instead of relying on sleeps.
 
+Projects that already use Point-Free's ConcurrencyExtras often do this with `withMainSerialExecutor`:
+
 ```swift
 try await withMainSerialExecutor {
     let task = Task { await viewModel.load() }
@@ -82,7 +84,7 @@ try await withMainSerialExecutor {
 }
 ```
 
-Use serial execution only for tests that actually need it. If the suite relies on a main serial executor helper, ensure tests do not run in parallel unintentionally.
+If you do not have that helper, fall back to explicit `Task.yield()`, actor isolation, or suite serialization instead of adding arbitrary sleeps.
 
 ## XCTest Fallback
 

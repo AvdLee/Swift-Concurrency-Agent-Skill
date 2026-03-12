@@ -48,10 +48,12 @@ Keep view-context work on the main actor when the app architecture expects that:
 
 ```swift
 @MainActor
-func fetchArticle(id: NSManagedObjectID, in context: NSManagedObjectContext) -> Article? {
-    context.object(with: id) as? Article
+func fetchArticle(id: NSManagedObjectID, in viewContext: NSManagedObjectContext) -> Article? {
+    viewContext.object(with: id) as? Article
 }
 ```
+
+Only pass a main-queue or view context to this helper.
 
 Do background work by moving only the identifier or snapshot:
 

@@ -13,9 +13,9 @@ Skip this file if:
 
 Jump to:
 
-- Tasks vs threads
-- Suspension points
-- Swift 6.2 behavior
+- Think in Isolation, Not Threads
+- Suspension Points
+- Swift 6.2-Era Behavior
 - Debugging
 
 ## Think in Isolation, Not Threads

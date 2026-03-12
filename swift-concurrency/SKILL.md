@@ -14,7 +14,7 @@ Before proposing a fix:
 
 | Setting | SwiftPM (`Package.swift`) | Xcode (`.pbxproj`) |
 |---|---|---|
-| Language mode | `// swift-tools-version:` | Swift Language Version |
+| Language mode | `swiftLanguageVersions` or `-swift-version` (`// swift-tools-version:` is not a reliable proxy) | Swift Language Version |
 | Strict concurrency | strict concurrency feature flags | `SWIFT_STRICT_CONCURRENCY` |
 | Default isolation | `.defaultIsolation(MainActor.self)` | `SWIFT_DEFAULT_ACTOR_ISOLATION` |
 | Upcoming features | `.enableUpcomingFeature(...)` | `SWIFT_UPCOMING_FEATURE_*` |

@@ -67,8 +67,15 @@ func download(_ url: URL) -> AsyncThrowingStream<Status, Error> {
 final class LocationMonitor: NSObject, CLLocationManagerDelegate {
     private var continuation: AsyncThrowingStream<CLLocation, Error>.Continuation?
 
-    lazy var stream = AsyncThrowingStream<CLLocation, Error> { continuation in
-        self.continuation = continuation
+    let stream: AsyncThrowingStream<CLLocation, Error>
+
+    override init() {
+        var capturedContinuation: AsyncThrowingStream<CLLocation, Error>.Continuation!
+        self.stream = AsyncThrowingStream { continuation in
+            capturedContinuation = continuation
+        }
+        super.init()
+        self.continuation = capturedContinuation
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

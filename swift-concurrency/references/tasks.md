@@ -96,7 +96,14 @@ let images = await withTaskGroup(of: UIImage?.self) { group in
         group.addTask { await download(url) }
     }
 
-    return await group.compactMap { $0 }
+    var images: [UIImage] = []
+    while let image = await group.next() {
+        if let image {
+            images.append(image)
+        }
+    }
+
+    return images
 }
 ```
 
