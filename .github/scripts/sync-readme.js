@@ -11,8 +11,17 @@ const tryExecGit = (command) => {
   try {
     return execGit(command);
   } catch (error) {
-    console.warn(`git command failed: ${error.message}`);
-    return null;
+    const msg = (error.stderr || error.message || "").toLowerCase();
+    const isExpectedRefError =
+      msg.includes("unknown revision") ||
+      msg.includes("ambiguous argument") ||
+      msg.includes("bad revision") ||
+      msg.includes("couldn't find remote ref");
+    if (isExpectedRefError) {
+      console.warn(`git ref not available (shallow clone?): ${error.message}`);
+      return null;
+    }
+    throw error;
   }
 };
 

@@ -37,7 +37,7 @@ for await value in values {
 
 Treat `for await` like any other long-lived async boundary: cancellation and lifetime still matter.
 
-**Important**: `AsyncStream` supports only one consumer. If multiple tasks iterate the same stream, values split between them unpredictably. Use `AsyncChannel` from AsyncAlgorithms when multiple consumers are needed.
+**Important**: `AsyncStream` supports only one consumer. If multiple tasks iterate the same stream, values split between them unpredictably. There is no built-in broadcast/share primitive; `AsyncChannel` from AsyncAlgorithms is also point-to-point. For true multicast, use multiple `AsyncStream` continuations or a custom broadcast wrapper.
 
 ## Prefer `AsyncStream` for Bridging
 
@@ -134,6 +134,29 @@ Prefer a custom `AsyncSequence` only when:
 
 For most app and migration work, `AsyncStream` is the simpler and cheaper answer.
 
+## Polling with `AsyncStream.init(unfolding:)`
+
+Safer than a manual `while` loop -- automatically finishes when the closure returns `nil`:
+
+```swift
+let pings = AsyncStream(unfolding: {
+    try? await Task.sleep(for: .seconds(5))
+    return await ping()
+})
+```
+
+## Standard Library Bridges
+
+Prefer built-in async sequences before creating your own bridge:
+
+```swift
+for await notification in NotificationCenter.default.notifications(named: .didUpdate) {
+    handle(notification)
+}
+```
+
+This is usually better than wrapping the same notification source in a custom `AsyncStream`.
+
 ## Anti-Patterns
 
 Avoid these:
@@ -143,6 +166,23 @@ Avoid these:
 - Holding observers or delegates forever because `onTermination` is missing.
 - Using streams for one-shot APIs that should just be `async`.
 - Sharing a single `AsyncStream` between multiple consumers (values split unpredictably).
+
+### Common mistakes agents make
+
+```swift
+// ❌ Values after finish() are silently dropped
+continuation.finish()
+continuation.yield(1) // Never received
+
+// ❌ Stream never terminates (forgot finish)
+AsyncStream { continuation in
+    continuation.yield(1)
+    // Missing: continuation.finish()
+}
+
+// ❌ Over-engineered: do not wrap single-value operations in streams
+func fetchData() -> AsyncThrowingStream<Data, Error> // Use async throws -> Data instead
+```
 
 ## Where to Go Next
 

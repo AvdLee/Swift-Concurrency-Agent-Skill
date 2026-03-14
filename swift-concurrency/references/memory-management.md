@@ -47,12 +47,14 @@ final class Loader {
 
 ```swift
 task = Task { [weak self] in
-    while let self {
+    while let self, !Task.isCancelled {
         await self.poll()
         try? await Task.sleep(for: .seconds(1))
     }
 }
 ```
+
+Check `Task.isCancelled` so the loop exits when the task is cancelled. Without it, `try?` swallows the `CancellationError` from `Task.sleep` and the loop keeps spinning.
 
 Use this pattern for polling, observers, and other indefinite work.
 
@@ -121,6 +123,50 @@ Look for these signals:
 ## Testing
 
 Write a focused deallocation test instead of guessing. See `testing.md` for examples.
+
+## Common Mistakes
+
+```swift
+// ❌ Forgetting weak self in indefinite loops
+Task {
+    while true {
+        self.poll() // Retain cycle -- self owns task, task owns self
+        try? await Task.sleep(for: .seconds(1))
+    }
+}
+
+// ❌ Strong capture in async sequences
+Task {
+    for await item in stream {
+        self.process(item) // May never release if stream never finishes
+    }
+}
+
+// ❌ Not canceling stored tasks
+class Manager {
+    var task: Task<Void, Never>?
+    func start() {
+        task = Task { await self.work() } // Retain cycle
+    }
+    // Missing: deinit { task?.cancel() }
+}
+
+// ❌ Assuming deinit breaks cycles
+deinit {
+    task?.cancel() // Never called if retain cycle already exists
+}
+```
+
+### Notification observer with weak capture
+
+```swift
+Task { [weak self] in
+    for await _ in NotificationCenter.default.notifications(named: .didUpdate) {
+        guard let self else { break }
+        await self.handleUpdate()
+    }
+}
+```
 
 ## Anti-Patterns
 

@@ -123,8 +123,8 @@ This skill gives your AI coding tool comprehensive Swift Concurrency guidance. I
 
 ### Integrate with Core Data
 - Safely pass data between isolation domains using `NSManagedObjectID`
-- Implement the Data Access Object (DAO) pattern
-- Use custom actor executors when needed
+- Handle default `@MainActor` isolation conflicts with Core Data generated types
+- Know when custom actor executors are (and aren't) worth the complexity
 - Avoid common Core Data concurrency pitfalls
 
 ## What Makes This Skill Different

@@ -21,7 +21,7 @@ Jump to:
 
 ## Core Rule
 
-Swift 6 mostly makes existing concurrency rules harder to ignore. The safest migration strategy is:
+Swift 6 does not change how concurrency works. It enforces existing rules more strictly, turning warnings into errors. The safest migration strategy is:
 
 1. Confirm settings.
 2. Pick one boundary.
@@ -37,7 +37,7 @@ Before interpreting diagnostics, confirm the target settings:
 
 | Setting | Where to check | Why it matters |
 |---|---|---|
-| Swift language mode | `SWIFT_VERSION` or `// swift-tools-version:` | Swift 6 turns many warnings into errors. |
+| Swift language mode | `swiftLanguageVersions` / `-swift-version` in SwiftPM, or `SWIFT_VERSION` in Xcode (`// swift-tools-version:` is not a reliable proxy) | Swift 6 turns many warnings into errors. |
 | Strict concurrency | `SWIFT_STRICT_CONCURRENCY` or SwiftPM strict flags | Controls how aggressively Sendable and isolation rules are enforced. |
 | Default actor isolation | `SWIFT_DEFAULT_ACTOR_ISOLATION` or `.defaultIsolation(MainActor.self)` | Changes default ownership of declarations. |
 | `NonisolatedNonsendingByDefault` | upcoming feature flags | Changes how `nonisolated async` functions execute. |
@@ -55,7 +55,7 @@ Settings-sensitive guidance:
 - Update third-party dependencies before blaming your own code.
 - Prefer local fixes over architecture rewrites.
 - Make new code `Sendable` by default where that matches the model.
-- Do not blanket-apply `@MainActor`.
+- Do not blanket-apply `@MainActor`. Before adding it, ask: (1) Should this actually run on the main actor? (2) Would a custom actor or `nonisolated` be more appropriate? (3) Is the type only UI-bound because of legacy design?
 - Do not use `@unchecked Sendable` as a first response.
 
 ## Recommended Migration Order
@@ -145,6 +145,7 @@ Requirements:
 - Document why it is needed.
 - Create follow-up work to remove it.
 - Do not assume it makes unsafe code safe; it only suppresses part of the signal.
+- Risks: removes compile-time safety for the entire import boundary and hides real sendability issues. Before applying, check whether the dependency has a newer version with concurrency annotations.
 
 ### `@unchecked Sendable`
 
@@ -199,6 +200,7 @@ Avoid these during migration:
 - Using `Task.sleep` as a manual debounce replacement where AsyncAlgorithms is the better fit.
 - Combining migration with unrelated API cleanup.
 - Applying multiple unsafe annotations without a documented invariant.
+- Combine `sink` closures run on the poster's thread, not the subscriber's actor. Calling `@MainActor` methods from a `sink` on a background-posted notification crashes at runtime. Fix: migrate to `notifications(named:)` async sequence, or wrap in `Task { @MainActor in ... }`.
 
 ## Validation Loop
 

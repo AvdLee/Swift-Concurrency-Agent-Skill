@@ -248,10 +248,10 @@ func update() async {
     await process() // Switches away from main actor
 }
 
-// ✅ Inherits isolation
+// ✅ Inherits isolation (still requires await -- but no executor hop)
 @MainActor
 func update() async {
-    process() // Stays on main actor (if nonisolated(nonsending))
+    await process() // Stays on main actor when nonisolated(nonsending)
 }
 
 nonisolated(nonsending) func process() async { }

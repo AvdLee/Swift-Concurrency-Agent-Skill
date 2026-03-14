@@ -62,7 +62,7 @@ actor BankAccount {
     var balance = 0
 
     func deposit(amount: Int) async {
-        balance += amount          // balance is now 100
+        balance += amount          // balance increased by amount
         await logTransaction()     // suspension: another deposit can run here
         balance += 10              // bonus -- but balance may have changed
     }
@@ -72,6 +72,16 @@ actor BankAccount {
 Two concurrent `deposit(amount: 100)` calls can produce `100 -> 200 -> 210 -> 220` instead of the expected `100 -> 110 -> 210 -> 220`.
 
 **Rule**: complete all critical state mutations before the next `await`. Move side effects (logging, networking) after the state is settled.
+
+Fixed version:
+
+```swift
+func deposit(amount: Int) async {
+    balance += amount
+    balance += 10      // bonus applied before suspension
+    await logTransaction()  // side effect after state is settled
+}
+```
 
 ## Swift 6.2-Era Behavior
 
@@ -112,7 +122,7 @@ Marks a function as nonisolated but non-sending: it can inherit caller isolation
 
 | Situation | Use |
 |---|---|
-| Work can safely stay on the caller's actor | plain `nonisolated` (new default) |
+| `nonisolated async` work can safely inherit caller isolation | plain `nonisolated` (inherits caller isolation under `NonisolatedNonsendingByDefault`) |
 | Work must run off the caller's actor | `@concurrent` |
 | You need the explicit nonsending annotation | `nonisolated(nonsending)` |
 | Feature flags are unknown | check the project settings before advising |
@@ -143,6 +153,20 @@ If code fails because `Thread.current` is unavailable from async contexts, fix t
 - mutable shared state -> usually an `actor`
 - plain async work with no isolated state -> `async` API with explicit ownership
 - work that must hop away from caller isolation under Swift 6.2-era behavior -> consider `@concurrent`
+
+## Common Misconceptions
+
+- "Each Task runs on its own thread" -- false; tasks share the cooperative pool.
+- "`await` blocks the thread" -- false; it suspends the task, freeing the thread.
+- "Task execution order is guaranteed" -- false; order depends on scheduling.
+- "Same task = same thread" -- false; after suspension, a task may resume on any thread.
+
+## GCD to Isolation Domain Migration
+
+Instead of asking "what thread should this run on?" ask "what isolation domain should own this work?"
+
+- `DispatchQueue.main.async { }` -> `@MainActor func updateUI()`
+- `DispatchQueue.global().async { }` -> `func work() async` (or `@concurrent` if it must leave caller isolation)
 
 ## Anti-Patterns
 

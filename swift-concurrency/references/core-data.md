@@ -25,6 +25,13 @@ Jump to:
 - Context-bound work should stay inside `NSManagedObjectContext.perform`.
 - Do not use `@unchecked Sendable` to silence Core Data warnings on managed objects.
 
+## Access Routing
+
+- UI / view-context read -> `@MainActor` + `viewContext`
+- Background mutation -> `newBackgroundContext()` + `perform { }`
+- Cross-boundary transfer -> `NSManagedObjectID` or value snapshot
+- Batch operation -> `NSBatchDeleteRequest` / `NSBatchUpdateRequest`
+
 ## Safe Transfer Patterns
 
 | Need | Preferred transfer |
@@ -76,7 +83,7 @@ Some Core Data APIs still need bridging:
 ```swift
 extension NSPersistentContainer {
     func loadPersistentStores() async throws {
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             loadPersistentStores { _, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -121,6 +128,22 @@ Custom Core Data executors are advanced and niche. Reach for them only when:
 - the team understands the maintenance cost
 
 For most migration work, they are unnecessary complexity.
+
+## Common Mistakes
+
+```swift
+// ❌ Passing managed objects across isolation
+func process(article: Article) async { }
+
+// ❌ Accessing context from wrong isolation
+let articles = viewContext.fetch(request) // not on main actor
+
+// ❌ Silencing warnings with @unchecked Sendable
+extension Article: @unchecked Sendable {}
+
+// ❌ Skipping perform for context-bound work
+backgroundContext.save() // not inside perform { }
+```
 
 ## Anti-Patterns
 

@@ -153,6 +153,38 @@ Avoid these:
 - Pulling in AsyncAlgorithms when plain `AsyncStream` or `.task(id:)` would be simpler.
 - Treating `AsyncChannel` as the default stream type; most one-producer flows can start with `AsyncStream`.
 
+### Debounce with `Task.sleep` (common agent mistake)
+
+```swift
+// ❌ Every keystroke spawns a new task; no cancellation of previous
+func search(_ query: String) {
+    Task {
+        try? await Task.sleep(for: .milliseconds(500))
+        await performSearch(query)
+    }
+}
+```
+
+Multiple tasks run simultaneously, causing out-of-order results. Use `debounce(for:)` on a stream instead:
+
+```swift
+// ✅ Stream-based debounce
+private lazy var queryStream: AsyncStream<String> = AsyncStream { continuation in
+    queryContinuation = continuation
+}
+private var queryContinuation: AsyncStream<String>.Continuation?
+
+func search(_ query: String) { queryContinuation?.yield(query) }
+
+func startSearch() {
+    Task { @MainActor in
+        for await query in queryStream.debounce(for: .milliseconds(500)) {
+            results = await APIClient.search(query)
+        }
+    }
+}
+```
+
 ## Combine Operator Mapping
 
 | Combine | AsyncAlgorithms / Swift Concurrency |
@@ -164,8 +196,8 @@ Avoid these:
 | `.zip` | `zip()` |
 | `.removeDuplicates` | `removeDuplicates()` |
 | `.share()` | No direct equivalent. `AsyncChannel` is point-to-point (one consumer gets each value), not broadcast. For multicast, use multiple `AsyncStream` continuations or a custom broadcast wrapper. |
-| `.flatMap` | `TaskGroup` (not a stream operator) |
-| `.receive(on:)` | `@MainActor` or `Task` with explicit isolation |
+| `.flatMap` | No direct stream equivalent. `TaskGroup` is the nearest tool for dynamic fan-out, but it is a concurrency primitive, not a stream operator -- it does not preserve ordering or backpressure. For sequential chaining, use a plain `for await` loop with an inner `async` call. |
+| `.receive(on:)` | No direct equivalent. Use `@MainActor` isolation or explicit `Task` context to control where work runs; semantics differ from Combine's scheduler model. |
 | `.eraseToAnyPublisher()` | `any AsyncSequence<Element, Error>` |
 | `.concat` | `chain()` |
 

@@ -43,6 +43,8 @@ Skip Quick Fix Mode when any of these are true:
 - The issue crosses module boundaries or changes public API behavior.
 - The likely fix depends on unsafe escape hatches.
 
+When build settings or default isolation are unknown, ask the developer to confirm before advising. Do not guess.
+
 ## Common Diagnostics
 
 | Diagnostic | First check | Smallest safe fix | Escalate to |
@@ -54,6 +56,13 @@ Skip Quick Fix Mode when any of these are true:
 | `wait(...) is unavailable from asynchronous contexts` | Is this legacy XCTest async waiting? | Replace with `await fulfillment(of:)` or Swift Testing equivalents. | `references/testing.md` |
 | Core Data concurrency warnings | Are `NSManagedObject` instances crossing contexts or actors? | Pass `NSManagedObjectID` or map to a Sendable value type. | `references/core-data.md` |
 | `Thread.current` unavailable from asynchronous contexts | Are you debugging by thread instead of isolation? | Reason in terms of isolation and use Instruments/debugger instead. | `references/threading.md` |
+
+## When Quick Fixes Fail
+
+1. Gather project settings if not already confirmed.
+2. Re-evaluate which isolation boundaries the type crosses.
+3. Route to the matching reference file for a deeper fix.
+4. If the fix may change behavior, document the invariant and add verification steps.
 
 ## Smallest Safe Fixes
 
@@ -104,7 +113,7 @@ Open the smallest reference that matches the question:
 When changing concurrency code:
 
 1. Re-check build settings before interpreting diagnostics.
-2. Build and clear the current category of errors before moving on.
+2. Build and clear one category of errors before moving on. Do not batch unrelated fixes into the same change.
 3. Run tests, especially actor-, lifetime-, and cancellation-sensitive tests.
 4. Use Instruments for performance claims instead of guessing.
 5. Verify deallocation and cancellation behavior for long-lived tasks.

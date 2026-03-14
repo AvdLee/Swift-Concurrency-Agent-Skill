@@ -58,16 +58,30 @@ await confirmation { confirm in
 }
 ```
 
+The `confirmation` block must `await` the async work that triggers the effect. Without `await`, the test silently passes without verifying anything.
+
 ### Use a Continuation
 
-Best when testing unstructured tasks or callback-style notifications:
+Best for strictly one-shot callbacks. Do not use for multi-fire observations (a second `resume()` traps at runtime):
 
 ```swift
 await withCheckedContinuation { continuation in
-    model.onDidChange = { continuation.resume() }
+    model.onCompletion = { continuation.resume() }
     model.startBackgroundWork()
 }
 ```
+
+For events that may fire more than once, use `confirmation` or an `AsyncStream`-based approach instead.
+
+### Flaky intermediate-state check (common agent mistake)
+
+```swift
+// ❌ Flaky -- task may not have started yet
+let task = Task { try await fetcher.fetch(url) }
+#expect(fetcher.isLoading == true) // Race condition
+```
+
+Use `withMainSerialExecutor` + `Task.yield()` to control scheduling before asserting intermediate state.
 
 ## Flake Control
 
@@ -114,6 +128,44 @@ final class ServiceTests: XCTestCase {
 ```
 
 If the project can adopt Swift Testing, prefer migrating new tests first instead of rewriting every old test immediately.
+
+## Async Setup and Teardown
+
+Swift Testing suites can use `init` for async setup. For async teardown, use a `TestScoping` trait:
+
+```swift
+@MainActor
+struct DatabaseTrait: SuiteTrait, TestTrait, TestScoping {
+    func provideScope(
+        for test: Test,
+        testCase: Test.Case?,
+        performing function: () async throws -> Void
+    ) async throws {
+        let database = Database()
+        await database.prepare()
+        try await function()
+        await database.cleanup()
+    }
+}
+
+@Suite(DatabaseTrait())
+@MainActor
+final class DatabaseTests {
+    @Test func insertsData() async throws { /* ... */ }
+}
+```
+
+`deinit` cannot call async methods, so `TestScoping` is the recommended path for async cleanup.
+
+For legacy XCTest, use `override func setUp() async throws` and `override func tearDown() async throws`.
+
+XCTest equivalent of `@Suite(.serialized)` for `withMainSerialExecutor`:
+
+```swift
+override func invokeTest() {
+    withMainSerialExecutor { super.invokeTest() }
+}
+```
 
 ## Testing Actor-Isolated Code
 
