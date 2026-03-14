@@ -16,6 +16,7 @@ Jump to:
 - Picking the right task tool
 - Cancellation
 - Task groups
+- Task timeout
 - SwiftUI usage
 
 ## Pick the Smallest Tool
@@ -72,6 +73,8 @@ Check cancellation:
 - before expensive work
 - after a suspension that may make the result irrelevant
 - inside long loops
+
+`Task.sleep` throws `CancellationError` when the task is cancelled, making it a useful cancellation checkpoint in polling loops. `Task.yield()` only gives other tasks a chance to run and does not check cancellation -- if the current task has the highest priority, it may resume immediately.
 
 ## `async let`
 
@@ -156,9 +159,35 @@ Prefer SwiftUI's task APIs when the work is view-owned:
 
 `.task(id:)` is usually better than manual "cancel previous search task" code for view-driven changes.
 
+## Task Timeout
+
+Use a throwing task group to race an operation against a sleep:
+
+```swift
+func withTimeout<T: Sendable>(
+    _ duration: Duration,
+    operation: @Sendable @escaping () async throws -> T
+) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask { try await operation() }
+        group.addTask {
+            try await Task.sleep(for: duration)
+            throw TimeoutError()
+        }
+        guard let result = try await group.next() else {
+            throw TimeoutError()
+        }
+        group.cancelAll()
+        return result
+    }
+}
+```
+
+`cancelAll()` is critical -- without it the losing task keeps running until scope exit.
+
 ## Priority
 
-Priorities are hints, not a guarantee.
+Priorities are hints, not a guarantee. The system automatically elevates priority to prevent inversion (e.g., a high-priority task awaiting `.value` of a lower-priority task).
 
 - Use higher priority for user-visible work.
 - Use lower priority for background or analytics work.

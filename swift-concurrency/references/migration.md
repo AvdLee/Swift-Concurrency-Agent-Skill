@@ -15,8 +15,10 @@ Jump to:
 
 - Project settings
 - Migration order
+- Migration tooling
 - Async wrappers
 - Escape hatches
+- Combine sink crash
 - Anti-patterns
 
 ## Core Rule
@@ -73,6 +75,18 @@ Settings-sensitive guidance:
 7. Move to Swift 6 language mode when the target is already mostly clean.
 
 If the project falls into the "concurrency rabbit hole" where one fix reveals many more diagnostics, narrow the scope again. That is normal.
+
+## Migration Tooling
+
+**SwiftPM**: `swift package migrate` can apply upcoming feature migrations automatically. Run it per-feature for smaller diffs.
+
+**Xcode**: offers three refactoring actions for closure-based APIs:
+
+1. **Add Async Wrapper** -- wraps the existing closure method (recommended first step).
+2. **Add Async Alternative** -- rewrites the method as async, keeps the original.
+3. **Convert Function to Async** -- replaces the method entirely.
+
+Known issue: Xcode refactoring can be unstable ("Connection interrupted"). Clean the build folder, clear derived data, or simplify complex closures if it fails.
 
 ## Async Wrappers First
 
@@ -190,6 +204,35 @@ token = NotificationCenter.default.addObserver(
 
 These replace the common pattern of `NotificationCenter.default.notifications(named:)` with compile-time safety for isolation and typing.
 
+## Combine `sink` and Actor Isolation (Runtime Crash)
+
+Combine `sink` closures run on the poster's thread, not the subscriber's actor. If a notification is posted from a background thread, calling a `@MainActor` method from the `sink` closure crashes at runtime -- the compiler does not catch this.
+
+```swift
+// ❌ Crashes when notification is posted from background thread
+NotificationCenter.default.publisher(for: .someNotification)
+    .sink { [weak self] _ in
+        self?.handleNotification() // @MainActor method called off main actor
+    }
+    .store(in: &cancellables)
+```
+
+Fix: migrate to an async notification sequence, or wrap the call explicitly:
+
+```swift
+// ✅ Option 1: async sequence (preferred)
+Task { [weak self] in
+    for await _ in NotificationCenter.default.notifications(named: .someNotification) {
+        await self?.handleNotification()
+    }
+}
+
+// ✅ Option 2: explicit hop
+.sink { [weak self] _ in
+    Task { @MainActor in self?.handleNotification() }
+}
+```
+
 ## Anti-Patterns
 
 Avoid these during migration:
@@ -200,7 +243,6 @@ Avoid these during migration:
 - Using `Task.sleep` as a manual debounce replacement where AsyncAlgorithms is the better fit.
 - Combining migration with unrelated API cleanup.
 - Applying multiple unsafe annotations without a documented invariant.
-- Combine `sink` closures run on the poster's thread, not the subscriber's actor. Calling `@MainActor` methods from a `sink` on a background-posted notification crashes at runtime. Fix: migrate to `notifications(named:)` async sequence, or wrap in `Task { @MainActor in ... }`.
 
 ## Validation Loop
 
