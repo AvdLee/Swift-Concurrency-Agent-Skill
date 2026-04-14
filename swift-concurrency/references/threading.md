@@ -59,6 +59,34 @@ func example() async {
 }
 ```
 
+### Forward progress guarantee
+
+Every task on the cooperative pool must make forward progress. Blocking a thread without releasing it starves the pool.
+
+**Never do this in async contexts:**
+```swift
+// DEADLOCK RISK: semaphore blocks the thread, Task may never get a thread to signal
+func syncWrapper() -> Data {
+    let sem = DispatchSemaphore(value: 0)
+    var result: Data!
+    Task {
+        result = try? await fetchData()
+        sem.signal()  // May never execute if pool is exhausted
+    }
+    sem.wait()  // Blocks the thread
+    return result
+}
+```
+
+The pool can have as few as 1 thread (iOS Simulator). Use `DISPATCH_COOPERATIVE_POOL_STRICT=1` environment variable to test with a single-threaded pool.
+
+**Safe alternatives to blocking primitives:**
+- `Mutex.withLock {}` -- brief synchronous lock, does not depend on other tasks
+- `withCheckedContinuation` -- bridges callback APIs to async/await
+- `AsyncStream` -- bridges streaming data to async iteration
+
+Some code cannot be bridged to Swift Concurrency. If a synchronous delegate protocol requires an async result, the only safe options are: redesign the protocol to be async, or do not use Swift Concurrency for that code path.
+
 ### Benefits over GCD
 
 **Prevents thread explosion**:
