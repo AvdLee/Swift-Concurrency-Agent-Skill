@@ -236,14 +236,17 @@ func backgroundTask() async {
 
 ### Nonisolated async functions (SE-461)
 
-**Old behavior**: Nonisolated async functions always switch to background.
+**Old behavior**: Nonisolated async functions always switch to the global executor (background).
 
-**New behavior**: Inherit caller's isolation by default.
+**New behavior**: Run on the caller's **executor** by default.
+
+**Critical distinction**: The function inherits the caller's **executor** (where it runs), NOT the caller's **isolation** (what it can access). The function remains `nonisolated` -- it cannot access actor-isolated state.
 
 ```swift
 class NotSendable {
     func performAsync() async {
-        print(Thread.current)
+        // Runs on caller's executor (e.g. main thread if called from @MainActor)
+        // But is still nonisolated -- cannot access @MainActor state
     }
 }
 
@@ -252,9 +255,43 @@ func caller() async {
     let obj = NotSendable()
     await obj.performAsync()
     // Old: Background thread
-    // New: Main thread (inherits @MainActor)
+    // New: Main thread (runs on caller's executor)
 }
 ```
+
+### executor != isolation (critical gotcha)
+
+`nonisolated(nonsending)` changes WHERE code runs, but NOT what it can access:
+
+```swift
+@MainActor
+class ViewModel {
+    var count = 0
+
+    func doWork() async {
+        await helper()
+    }
+}
+
+nonisolated(nonsending) func helper() async {
+    // Runtime: runs on main thread (caller's executor)
+    // Compile-time: nonisolated (no access to @MainActor state)
+
+    Task {
+        // This Task inherits STATIC isolation of helper() -- nonisolated
+        // It does NOT inherit @MainActor, despite running on main thread
+        // viewModel.count += 1  // ERROR: main actor-isolated property
+    }
+}
+```
+
+**Why**: `Task {}` inherits static (compile-time) isolation, not the runtime executor.
+Per [SE-0461](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md): "Unstructured tasks created within nonisolated functions do NOT inherit the caller's isolation automatically."
+
+**Correct patterns**:
+- Return data to the caller instead of creating Task inside nonisolated functions
+- Use `Task { @MainActor in }` for explicit isolation
+- Use `isolated (any Actor)? = #isolation` parameter for dynamic isolation
 
 ### Enabling new behavior
 
@@ -278,17 +315,16 @@ func performAsync() async {
 
 ### nonisolated(nonsending)
 
-Prevent sending non-Sendable values across isolation:
+Runs on the caller's **executor** without crossing an isolation boundary, so no Sendable/sending checks:
 
 ```swift
 nonisolated(nonsending) func storeTouch(...) async {
-    // Runs on caller's isolation, no value sending
+    // Runs on caller's executor, no isolation boundary crossed
 }
 ```
 
-> **Course Deep Dive**: This topic is covered in detail in [Lesson 7.4: Dispatching to different threads using nonisolated(nonsending) and @concurrent (Updated for Swift 6.2)](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=lesson-reference)
-
-**Use when**: Method doesn't need to switch isolation, avoiding Sendable requirements.
+**Use when**: Method doesn't need to switch executor, avoiding Sendable requirements.
+**Remember**: The function is still nonisolated -- it cannot access actor-isolated state, and `Task {}` inside it will be nonisolated.
 
 ## Default Isolation Domain (SE-466)
 

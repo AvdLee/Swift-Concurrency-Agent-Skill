@@ -31,6 +31,9 @@ Guardrails:
 - If recommending `@preconcurrency`, `@unchecked Sendable`, or `nonisolated(unsafe)`, require a documented safety invariant and a follow-up removal plan.
 - Optimize for the smallest safe change. Do not refactor unrelated architecture during migration.
 - Course references are for deeper learning only. Use them sparingly and only when they clearly help answer the developer's question.
+- Remember that executor != isolation. A `nonisolated(nonsending)` function runs on the caller's executor but is NOT isolated to the caller's actor. `Task {}` inside it inherits static isolation (nonisolated), not the runtime executor.
+- Never use `DispatchSemaphore`, `NSCondition`, or other blocking primitives inside async contexts -- they can deadlock the cooperative thread pool.
+- `@concurrent` parameters are implicitly `sending` (not `Sendable`). Non-Sendable types in a disconnected region can be passed to `@concurrent` functions.
 
 ## Quick Fix Mode
 
