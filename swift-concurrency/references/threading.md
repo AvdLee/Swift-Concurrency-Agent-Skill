@@ -553,7 +553,9 @@ Instead of asking "what thread should this run on?" ask "what isolation domain s
 - Efficient task scheduling
 - Automatic load balancing
 
-## Further Learning
+## Key Sources
 
-For migration strategies, real-world examples, and advanced threading patterns, see [Swift Concurrency Course](https://www.swiftconcurrencycourse.com).
+- [SE-0461: Async Function Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md) -- nonisolated(nonsending), @concurrent, executor != isolation
+- [SE-0466: Control Default Actor Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0466-control-default-actor-isolation.md) -- defaultIsolation
+- [Saagar Jha: Swift Concurrency Waits for No One](https://saagarjha.com/blog/2023/12/22/swift-concurrency-waits-for-no-one/) -- forward progress, cooperative pool
 

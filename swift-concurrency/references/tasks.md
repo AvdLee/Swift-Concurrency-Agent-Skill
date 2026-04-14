@@ -671,7 +671,9 @@ The compiler does NOT catch logical races -- only data races. The synchronous ch
 6. **Set priority only when needed** (inherit by default)
 7. **Don't mutate task groups** from outside their creation context
 
-## Further Learning
+## Key Sources
 
-For hands-on examples, advanced patterns, and migration strategies, see [Swift Concurrency Course](https://www.swiftconcurrencycourse.com).
+- [SE-0304: Structured Concurrency](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0304-structured-concurrency.md) -- Task, TaskGroup, cancellation, priorities
+- [SE-0317: async let](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0317-async-let.md) -- parallel bindings
+- [SE-0311: Task Local Values](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0311-task-locals.md)
 

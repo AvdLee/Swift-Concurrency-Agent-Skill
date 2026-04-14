@@ -135,3 +135,12 @@ Like AsyncChannel but can emit errors through the stream. Stable operator.
 
 An AsyncSequence that emits a value at regular intervals. Replaces timer-based publishers and manual sleep loops. Stable operator.
 
+## Key Sources
+
+- [SE-0296: Async/Await](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0296-async-await.md)
+- [SE-0304: Structured Concurrency](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0304-structured-concurrency.md)
+- [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md)
+- [SE-0414: Region-Based Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0414-region-based-isolation.md)
+- [SE-0461: Async Function Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md)
+- [SE-0466: Control Default Actor Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0466-control-default-actor-isolation.md)
+

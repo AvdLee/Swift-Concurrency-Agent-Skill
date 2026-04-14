@@ -677,7 +677,11 @@ Need thread-safe mutable state?
    └─ Fine-grained locking? → Mutex
 ```
 
-## Further Learning
+## Key Sources
 
-For migration strategies, advanced patterns, and real-world examples, see [Swift Concurrency Course](https://www.swiftconcurrencycourse.com).
+- [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) -- isolation model, reentrancy
+- [SE-0316: Global Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0316-global-actors.md) -- @MainActor, inference rules
+- [SE-0392: Custom Actor Executors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0392-custom-actor-executors.md) -- SerialExecutor, assumeIsolated
+- [SE-0433: Mutex](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0433-mutex.md) -- synchronous alternative to actors
+- [SE-0420: Inheritance of Actor Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0420-inheritance-of-actor-isolation.md) -- #isolation, isolated parameters
 
