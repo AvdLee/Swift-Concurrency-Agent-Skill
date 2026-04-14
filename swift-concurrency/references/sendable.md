@@ -427,7 +427,29 @@ func createArticle(title: String) -> sending Article {
 
 Transfers ownership to caller's region.
 
-> **Course Deep Dive**: This topic is covered in detail in [Lesson 4.8: Understanding region-based isolation and the sending keyword](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=lesson-reference)
+### @concurrent parameters are implicitly sending
+
+`@concurrent` functions (Swift 6.2) make their parameters implicitly `sending`. This means non-Sendable types CAN be passed if they are in a disconnected region:
+
+```swift
+class Parser {  // non-Sendable
+    func parse() -> Result { /* ... */ }
+}
+
+@concurrent
+func process(_ parser: Parser) async -> Result {
+    parser.parse()
+}
+
+@MainActor
+func example() async {
+    let parser = Parser()              // disconnected region
+    let result = await process(parser) // OK: parser transferred
+    // parser can no longer be used here
+}
+```
+
+This is NOT the same as requiring Sendable. The compiler uses region-based analysis per [SE-0414](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0414-region-based-isolation.md) to prove the transfer is safe.
 
 ## Global Variables
 
