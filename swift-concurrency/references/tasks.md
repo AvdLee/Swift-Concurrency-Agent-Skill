@@ -612,6 +612,47 @@ let profile = Profile(
 )
 ```
 
+## Logical Races (not data races)
+
+Multiple Tasks created from the same context do NOT guarantee execution order. This is different from `DispatchQueue.async` which preserves FIFO order:
+
+```swift
+// These may complete in ANY order:
+Task { await step1() }
+Task { await step2() }
+```
+
+A common bug: double-tap creates two Tasks that interleave:
+
+```swift
+@MainActor
+class ViewModel {
+    var inProgress = false
+
+    func toggle() {
+        // WRONG: no guard -- two Tasks can interleave
+        Task {
+            await system.toggleState()
+            state = await system.state
+        }
+    }
+
+    // CORRECT: synchronous check BEFORE await
+    func toggleSafe() {
+        if inProgress { return }
+        inProgress = true
+
+        Task {
+            await system.toggleState()
+            state = await system.state
+            inProgress = false
+        }
+    }
+}
+```
+
+The compiler does NOT catch logical races -- only data races. The synchronous check must happen before any `await`.
+
 ## Common Mistakes Agents Make
 
 - Replacing structured child work with many unrelated top-level tasks.
