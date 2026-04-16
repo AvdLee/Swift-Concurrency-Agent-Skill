@@ -43,11 +43,11 @@ While an actor is suspended at an `await`, other tasks can enter the actor and m
 
 ## nonisolated
 
-Marks a declaration as not isolated to the surrounding actor/global actor. Use only when it truly does not touch isolated mutable state (typically immutable Sendable data).
+Marks a declaration as not isolated to the surrounding actor/global actor. Use only when it truly does not touch isolated mutable state (typically immutable Sendable data). Before Swift 6.2, `nonisolated async` functions always ran on the global executor (background). With `NonisolatedNonsendingByDefault`, they run on the caller’s executor instead.
 
 ## nonisolated(nonsending) (Swift 6.2+ behavior)
 
-An opt-out to prevent “sending” non-Sendable values across isolation while still allowing an async function to run in the caller’s isolation. Used to reduce Sendable friction when you do not need to hop executors.
+Causes an async function to run on the caller’s **executor** without crossing an isolation boundary, so no Sendable/sending checks apply. The function remains nonisolated -- it does not inherit the caller’s **isolation**. This means `Task {}` created inside it will be nonisolated, not isolated to the caller’s actor. See `threading.md` for the executor != isolation gotcha.
 
 ## @concurrent (Swift 6.2+ behavior)
 
@@ -72,6 +72,8 @@ A concrete implementation of `AsyncSequence` that bridges callback-based or dele
 ## Continuation
 
 A mechanism to bridge callback-based APIs to async/await. `withCheckedContinuation` and `withCheckedThrowingContinuation` provide safe bridging with runtime checks. `withUnsafeContinuation` variants skip checks for performance-critical code.
+
+**Critical rule: exactly once.** Each continuation must be resumed exactly once on every code path ([SE-0300](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0300-continuation.md)). Zero resumes = the Task hangs forever (memory leak). Two resumes = crash (checked) or undefined behavior (unsafe).
 
 ## Task Local
 
@@ -132,4 +134,13 @@ Like AsyncChannel but can emit errors through the stream. Stable operator.
 ## AsyncTimerSequence
 
 An AsyncSequence that emits a value at regular intervals. Replaces timer-based publishers and manual sleep loops. Stable operator.
+
+## Key Sources
+
+- [SE-0296: Async/Await](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0296-async-await.md)
+- [SE-0304: Structured Concurrency](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0304-structured-concurrency.md)
+- [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md)
+- [SE-0414: Region-Based Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0414-region-based-isolation.md)
+- [SE-0461: Async Function Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md)
+- [SE-0466: Control Default Actor Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0466-control-default-actor-isolation.md)
 

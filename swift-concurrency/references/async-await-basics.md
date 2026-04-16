@@ -260,7 +260,9 @@ let profile = Profile(
 )
 ```
 
-## Further Learning
+## Key Sources
 
-For in-depth coverage of async/await patterns, error handling strategies, and real-world migration scenarios, see [Swift Concurrency Course](https://www.swiftconcurrencycourse.com).
+- [SE-0296: Async/Await](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0296-async-await.md) -- suspension semantics, execution model
+- [SE-0300: Continuations](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0300-continuation.md) -- bridging callback APIs
+- [SE-0298: AsyncSequence](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0298-asyncsequence.md) -- for-await iteration
 
