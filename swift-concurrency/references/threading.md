@@ -141,7 +141,7 @@ let data = await fetchData() // Potential suspension
 2. **State can change** - mutable state may be modified during suspension
 3. **Actor reentrancy** - other tasks can access actor during suspension
 
-`Task.sleep` follows the same rule: it suspends the task rather than blocking a thread. That still does not make actor choice irrelevant. If a delayed retry starts on `@MainActor`, the task may first wait for main-actor availability only to suspend immediately. Prefer `@concurrent` when the delay itself is not UI-owned, then hop back with `MainActor.run` for the final UI mutation.
+`Task.sleep` follows the same rule: it suspends the task rather than blocking a thread. That still does not make actor choice irrelevant. If a delayed retry starts on `@MainActor`, it may wait for main-actor availability before reaching `Task.sleep` when scheduled from another executor or while the main actor is busy. Prefer `@concurrent` when the delay itself is not UI-owned, then hop back with `MainActor.run` for the final UI mutation.
 
 ### Actor reentrancy example
 
