@@ -21,8 +21,11 @@ Project settings that change concurrency behavior:
 | Strict concurrency | `.enableExperimentalFeature("StrictConcurrency=targeted")` | `SWIFT_STRICT_CONCURRENCY` |
 | Default isolation | `.defaultIsolation(MainActor.self)` | `SWIFT_DEFAULT_ACTOR_ISOLATION` |
 | Upcoming features | `.enableUpcomingFeature("NonisolatedNonsendingByDefault")` | `SWIFT_UPCOMING_FEATURE_*` |
+| Approachable Concurrency | N/A (use individual upcoming features) | `SWIFT_APPROACHABLE_CONCURRENCY` |
 
-If any of these are unknown, ask the developer to confirm them before giving migration-sensitive guidance. Do not guess.
+> **Xcode 26 note**: New projects created in Xcode 26 will often start with `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES` enabled by default. Treat these as likely defaults for newly created projects, not as confirmed settings.
+
+If any of these are unknown, ask the developer to confirm them before giving migration-sensitive guidance. Do not guess, even for new Xcode 26 projects.
 
 Guardrails:
 
@@ -58,6 +61,7 @@ Skip Quick Fix Mode when any of these are true:
 | Core Data concurrency warnings | Are `NSManagedObject` instances crossing contexts or actors? | Pass `NSManagedObjectID` or map to a Sendable value type. | `references/core-data.md` |
 | `Thread.current` unavailable from asynchronous contexts | Are you debugging by thread instead of isolation? | Reason in terms of isolation and use Instruments/debugger instead. | `references/threading.md` |
 | SwiftLint concurrency-related warnings | Which specific lint rule triggered? | Use `references/linting.md` for rule intent and preferred fixes; avoid dummy awaits. | `references/linting.md` |
+| `... cannot satisfy conformance requirement for a 'Sendable' type parameter` (`SendableMetatype`) | Does the conformance carry global-actor isolation? | Remove actor isolation from the conformance, or avoid passing the metatype across isolation boundaries. See `SendableMetatype` section in `references/actors.md`. | `references/actors.md` |
 
 ## When Quick Fixes Fail
 
