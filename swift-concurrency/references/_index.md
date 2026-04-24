@@ -27,6 +27,7 @@ Quick navigation for the Swift Concurrency skill.
 | `performance.md` | Instruments workflow, actor hops, suspension cost |
 | `memory-management.md` | retain cycles, long-lived tasks, cleanup |
 | `core-data.md` | `NSManagedObjectID`, `perform`, default isolation conflicts |
+| `observation.md` | `@Observable` with `@MainActor`, cross-isolation access, Sendable constraints |
 
 ## Migration and Tooling
 
@@ -48,3 +49,4 @@ Quick navigation for the Swift Concurrency skill.
 - "I need to migrate to Swift 6" → `migration.md`
 - "I need to test async code" → `testing.md`
 - "I need to optimize slow async code" → `performance.md`
+- "I need to use @Observable safely with actors" → `observation.md`
