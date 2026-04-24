@@ -56,6 +56,8 @@ Skip Quick Fix Mode when any of these are true:
 | `SwiftLint async_without_await` | Is `async` actually required by protocol, override, or `@concurrent`? | Remove `async`, or use a narrow suppression with rationale. Never add fake awaits. | `references/linting.md` |
 | `wait(...) is unavailable from asynchronous contexts` | Is this legacy XCTest async waiting? | Replace with `await fulfillment(of:)` or Swift Testing equivalents. | `references/testing.md` |
 | Core Data concurrency warnings | Are `NSManagedObject` instances crossing contexts or actors? | Pass `NSManagedObjectID` or map to a Sendable value type. | `references/core-data.md` |
+| `@Observable` isolation or Sendable errors | Is the `@Observable` class annotated with the correct actor? | Add `@MainActor` for UI state; pass Sendable snapshots across boundaries. | `references/observation.md` |
+ | `Thread.current` unavailable from asynchronous contexts | Are you debugging by thread instead of isolation? | Reason in terms of isolation and use Instruments/debugger instead. | `references/threading.md` |
 | `Thread.current` unavailable from asynchronous contexts | Are you debugging by thread instead of isolation? | Reason in terms of isolation and use Instruments/debugger instead. | `references/threading.md` |
 | SwiftLint concurrency-related warnings | Which specific lint rule triggered? | Use `references/linting.md` for rule intent and preferred fixes; avoid dummy awaits. | `references/linting.md` |
 
@@ -148,6 +150,7 @@ Open the smallest reference that matches the question:
   - `references/performance.md` — Profiling with Instruments, reducing suspension points, execution strategies
   - `references/memory-management.md` — Retain cycles in tasks, memory safety patterns
   - `references/core-data.md` — NSManagedObject sendability, custom executors, isolation conflicts
+  - `references/observation.md` — @Observable with @MainActor, cross-isolation access, Sendable constraints
 - Migration and tooling
   - `references/migration.md` — Swift 6 migration strategy, closure-to-async conversion, @preconcurrency, FRP migration
   - `references/linting.md` — Concurrency-focused lint rules and SwiftLint `async_without_await`
