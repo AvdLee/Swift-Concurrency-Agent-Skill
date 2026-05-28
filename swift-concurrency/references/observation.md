@@ -124,7 +124,7 @@ final class UserProfile {
 }
 ```
 
-### Parallel Access with Task Groups
+### Parallel Access with `async let`
 
 ```swift
 @MainActor
@@ -167,7 +167,7 @@ final class ImageProcessor {
 }
 ```
 
-> **Note**: Prefer `Task.detached` or a dedicated actor for CPU-heavy work. Keeping heavy computation on `@MainActor` blocks the UI.
+> **Note**: For CPU-heavy work, prefer a dedicated actor or a `nonisolated` `async` method marked `@concurrent` so the call stays structured. Reserve `Task.detached` for the specific case where you must escape inherited actor isolation (see `tasks.md` — "Detached Tasks"). Either way, keep heavy computation off `@MainActor` so the UI stays responsive.
 
 ---
 
@@ -175,7 +175,11 @@ final class ImageProcessor {
 
 `@Observable` does not natively produce an `AsyncSequence`. Use `withObservationTracking` to bridge changes into an `AsyncStream`.
 
+The example below uses `.debounce(for:)` on the resulting stream, which requires the [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms) package (`import AsyncAlgorithms`). See `references/async-algorithms.md` for setup.
+
 ```swift
+import AsyncAlgorithms
+
 @MainActor
 @Observable
 final class SearchModel {
@@ -232,7 +236,7 @@ final class SearchModel {
 ### Problem: Unprotected Shared State
 
 ```swift
-// ❌ Data race: no isolation, accessed from multiple tasks
+// ❌ Won't compile under Swift 6 strict concurrency
 @Observable
 final class Counter {
     var count = 0
@@ -241,10 +245,13 @@ final class Counter {
 let counter = Counter()
 await withTaskGroup(of: Void.self) { group in
     for _ in 0..<100 {
-        group.addTask { counter.count += 1 } // 💥 Data race
+        // Error: capture of non-Sendable type 'Counter' in a `@Sendable` closure
+        group.addTask { counter.count += 1 }
     }
 }
 ```
+
+Under Swift 6, `withTaskGroup.addTask` requires a `@Sendable` closure, so capturing a non-isolated `@Observable` class is rejected at compile time before any runtime race can occur. The fix is to give the class a clear isolation domain, not to silence the warning with `@unchecked Sendable`.
 
 ### Solution 1: Actor Isolation
 
@@ -409,8 +416,12 @@ class SearchModel: ObservableObject {
 
 ### After (Swift Concurrency)
 
+This example uses `.debounce(for:)` and requires `import AsyncAlgorithms` (see `references/async-algorithms.md`).
+
 ```swift
 // ✅ Modern pattern: @Observable + AsyncStream
+import AsyncAlgorithms
+
 @MainActor
 @Observable
 final class SearchModel {
@@ -465,7 +476,7 @@ final class SearchModel {
 | `Capture of non-sendable type 'MyModel' in @Sendable closure` | Passing `@Observable` object into `Task {}` | Add `@MainActor` to the class, or use `@Sendable` with `await` access |
 | `Actor-isolated property 'x' can not be mutated from a Sendable closure` | Writing to actor-isolated property inside `Task.detached` | Read/write through `await` on the owning actor |
 | `Reference to property 'x' in closure requires explicit use of 'self'` | Standard Swift capture rule, not concurrency-specific | Add `self.` prefix |
-| Data race at runtime (TSAN) | No isolation on `@Observable` class accessed from multiple tasks | Apply `@MainActor` or actor isolation to the class |
+| `Capture of non-Sendable type 'X' in a '@Sendable' closure` when adding work to a task group | No isolation on the `@Observable` class, so it isn't `Sendable` | Apply `@MainActor` or a global actor to the class so it is isolated and access goes through `await` |
 | `Sending value of non-Sendable type 'MyModel' risks causing data races` | Passing `@Observable` object across isolation boundaries | Pass a `Sendable` value-type snapshot instead of the object |
 
 ---
