@@ -3,7 +3,7 @@
 Use this when:
 - You're using `@Observable` classes with `@MainActor` or custom actors
 - You see data-race warnings when accessing observed properties from async contexts
-- You need to bridge `@Observable` with `AsyncStream` or `AsyncSequence`
+- You need to bridge `@Observable` with `AsyncSequence` (via `Observations` on Swift 6.2+, or `AsyncStream` as fallback)
 - You're migrating from `ObservableObject` and hitting concurrency issues
 
 Skip this file if:
@@ -16,7 +16,7 @@ Jump to:
 - [Observable with MainActor](#observable-with-mainactor)
 - [Observable with Custom Actors](#observable-with-custom-actors)
 - [Accessing Observed Properties from Async Contexts](#accessing-observed-properties-from-async-contexts)
-- [Bridging Observable to AsyncStream](#bridging-observable-to-asyncstream)
+- [Bridging Observable to AsyncSequence](#bridging-observable-to-asyncsequence)
 - [Preventing Data Races](#preventing-data-races)
 - [Passing @Observable Across Isolation Boundaries](#passing-observable-across-isolation-boundaries)
 - [Migration from ObservableObject](#migration-from-observableobject)
@@ -82,9 +82,9 @@ final class DataProcessor {
     var progress: Double = 0.0
     var results: [ProcessedItem] = []
 
-    func process(items: [RawItem]) async {
+    func process(items: [RawItem], transform: @Sendable (RawItem) -> ProcessedItem) {
         for (index, item) in items.enumerated() {
-            results.append(await transform(item))
+            results.append(transform(item))
             progress = Double(index + 1) / Double(items.count)
         }
     }
@@ -171,11 +171,36 @@ final class ImageProcessor {
 
 ---
 
-## Bridging Observable to AsyncStream
+## Bridging Observable to AsyncSequence
 
-`@Observable` does not natively produce an `AsyncSequence`. Use `withObservationTracking` to bridge changes into an `AsyncStream`.
+### Swift 6.2+ (iOS 26 / macOS 26): `Observations`
 
-The example below uses `.debounce(for:)` on the resulting stream, which requires the [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms) package (`import AsyncAlgorithms`). See `references/async-algorithms.md` for setup.
+Swift 6.2 added [`Observations`](https://developer.apple.com/documentation/observation/observations), an `AsyncSequence` that streams transactional updates to any `@Observable` properties read inside its closure. This is the modern, framework-independent way to observe `@Observable` from concurrency code.
+
+```swift
+@MainActor
+@Observable
+final class SearchModel {
+    var query: String = ""
+    private(set) var results: [Item] = []
+
+    func observeQuery() async {
+        let queryChanges = Observations { self.query }
+
+        // `.debounce(for:)` requires AsyncAlgorithms — see `async-algorithms.md`.
+        for await text in queryChanges.debounce(for: .milliseconds(300)) {
+            guard !Task.isCancelled else { return }
+            results = text.isEmpty ? [] : (try? await api.search(text)) ?? []
+        }
+    }
+}
+```
+
+`Observations` batches synchronous mutations until the next `await`, so observers only see consistent snapshots — no half-updated state. It is **not back-ported**; reach for the fallback below if you need to support older OS versions.
+
+### Pre-Swift 6.2 fallback: `withObservationTracking` + `AsyncStream`
+
+`withObservationTracking` fires `onChange` only once per cycle, so the closure has to re-register itself to keep observing.
 
 ```swift
 import AsyncAlgorithms
@@ -185,49 +210,33 @@ import AsyncAlgorithms
 final class SearchModel {
     var query: String = ""
     private(set) var results: [Item] = []
-    private var searchTask: Task<Void, Never>?
 
-    func startObservingQuery() {
-        searchTask = Task { [weak self] in
-            let queryStream = AsyncStream<String> { continuation in
-                @Sendable func observe() {
-                    withObservationTracking {
-                        _ = self?.query
-                    } onChange: {
-                        Task { @MainActor in
-                            continuation.yield(self?.query ?? "")
-                            observe()
-                        }
+    func observeQuery() async {
+        let stream = AsyncStream<String> { continuation in
+            @Sendable func track() {
+                withObservationTracking {
+                    _ = self.query
+                } onChange: {
+                    Task { @MainActor in
+                        continuation.yield(self.query)
+                        track()
                     }
                 }
-                observe()
             }
-
-            for await query in queryStream.debounce(for: .milliseconds(300)) {
-                guard !Task.isCancelled else { return }
-                await self?.performSearch(query)
-            }
+            track()
         }
-    }
 
-    private func performSearch(_ text: String) async {
-        guard !text.isEmpty else {
-            results = []
-            return
+        for await text in stream.debounce(for: .milliseconds(300)) {
+            guard !Task.isCancelled else { return }
+            results = text.isEmpty ? [] : (try? await api.search(text)) ?? []
         }
-        results = (try? await api.search(text)) ?? []
-    }
-
-    func stopObserving() {
-        searchTask?.cancel()
     }
 }
 ```
 
-**Key points**:
-- `withObservationTracking` fires `onChange` only once per tracking cycle — you must re-register after each change
-- Use `[weak self]` to avoid retain cycles in long-lived streams
-- Always check `Task.isCancelled` in the consuming loop
+**Lifecycle notes** (apply to both patterns):
+- The consumer (`for await …`) owns cancellation. Cancelling the enclosing `Task` ends the loop.
+- In the fallback, finish the `AsyncStream` continuation when ownership ends (e.g. in `deinit` on a non-isolated coordinator) to avoid leaking the stream.
 
 ---
 
@@ -307,7 +316,7 @@ final class Counter {
 |---|---|---|
 | UI-bound model | `@MainActor` on class | Simplest; all property access is safe |
 | Background processing model | `@globalActor` on class | Keeps work off main thread |
-| Mixed read/write from multiple contexts | `@MainActor` class + `Task.detached` for heavy work | MainActor owns state, offload computation |
+| Mixed read/write from multiple contexts | `@MainActor` class + a dedicated actor (or `@concurrent` async method) for heavy work | MainActor owns state; the actor or `@concurrent` call offloads computation off the main thread without unstructured `Task.detached` |
 | High-contention counter/accumulator | Internal actor + `@MainActor` surface | Actor serializes writes, MainActor publishes |
 
 ---
@@ -367,104 +376,22 @@ actor SyncEngine {
 }
 ```
 
-### Solution 3: `@unchecked Sendable` (Last Resort)
-
-Only when you can **document and guarantee** thread safety:
-
-```swift
-@MainActor
-@Observable
-final class AppState: @unchecked Sendable {
-    // ⚠️ Safety invariant: all mutations happen on @MainActor.
-    // TODO: Remove @unchecked once compiler supports this pattern natively.
-    var isLoggedIn = false
-}
-```
-
-**Rule**: Require a documented safety invariant and a follow-up removal plan.
+> **Note**: A `@MainActor` `@Observable` class is already implicitly `Sendable` because access is serialized through the main actor — you do not need `@unchecked Sendable` on it. If you have a genuinely non-isolated `@Observable` that must cross boundaries, prefer a Sendable snapshot or actor wrapping; reach for `@unchecked Sendable` only with a documented safety invariant. See `sendable.md` for the full discussion of safe escape hatches.
 
 ---
 
 ## Migration from ObservableObject
+
+`@Observable` removes the publisher surface, so concurrency migrations stop being about Combine bookkeeping and start being about isolation. Mapping:
 
 | `ObservableObject` (old) | `@Observable` (new) |
 |---|---|
 | `class MyModel: ObservableObject` | `@Observable final class MyModel` |
 | `@Published var name = ""` | `var name = ""` |
 | `objectWillChange.send()` | Automatic — tracked on property access |
-| `$name` publisher → `sink` | `withObservationTracking` or `AsyncStream` bridge |
+| `$name` publisher → `sink` | `Observations { … }` (Swift 6.2+) or `withObservationTracking` fallback |
 
-### Before (Combine-based)
-
-```swift
-// ❌ Old pattern: manual publisher, Combine pipeline
-class SearchModel: ObservableObject {
-    @Published var query = ""
-    @Published var results: [Item] = []
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        $query
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .sink { [weak self] text in
-                Task { await self?.search(text) }
-            }
-            .store(in: &cancellables)
-    }
-}
-```
-
-### After (Swift Concurrency)
-
-This example uses `.debounce(for:)` and requires `import AsyncAlgorithms` (see `references/async-algorithms.md`).
-
-```swift
-// ✅ Modern pattern: @Observable + AsyncStream
-import AsyncAlgorithms
-
-@MainActor
-@Observable
-final class SearchModel {
-    var query = ""
-    private(set) var results: [Item] = []
-
-    func observeQuery() async {
-        for await debouncedQuery in queryStream().debounce(for: .milliseconds(300)) {
-            guard !Task.isCancelled else { return }
-            results = (try? await api.search(debouncedQuery)) ?? []
-        }
-    }
-
-    private func queryStream() -> AsyncStream<String> {
-        AsyncStream { [weak self] continuation in
-            @Sendable func track() {
-                guard let self else {
-                    continuation.finish()
-                    return
-                }
-                withObservationTracking {
-                    _ = self.query
-                } onChange: {
-                    Task { @MainActor [weak self] in
-                        guard let self else {
-                            continuation.finish()
-                            return
-                        }
-                        continuation.yield(self.query)
-                        track()
-                    }
-                }
-            }
-            track()
-        }
-    }
-}
-```
-
-**Key differences**:
-- No `Combine` import or `AnyCancellable` bookkeeping
-- Class is `final` — `@Observable` uses a macro, not protocol inheritance
-- All concurrency is structured via `Task` and `AsyncStream`
+For full Combine-to-Concurrency examples — including `@Published` + `debounce` + `sink` rewritten as `@Observable` + `AsyncSequence` — use `references/async-algorithms.md` (operator-by-operator mapping) and `references/migration.md` (real-world migration walkthroughs). The "Bridging Observable to AsyncSequence" section above shows the modern replacement for `$name.sink { … }` patterns specifically.
 
 ---
 
