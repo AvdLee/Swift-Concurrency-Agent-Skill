@@ -96,6 +96,27 @@ Follow your tool’s official documentation, here are a few popular ones:
 
 Your agent should reference the triage/playbook in `swift-concurrency/SKILL.md` and jump into the relevant reference file for your error or task.
 
+### Option E: Using Gemini CLI
+
+Install globally (user-level skill available in all Gemini CLI sessions):
+```bash
+gemini skills install https://github.com/AvdLee/Swift-Concurrency-Agent-Skill
+```
+Or install at workspace level so the skill is shared with your team via version control:
+```bash
+gemini skills install https://github.com/AvdLee/Swift-Concurrency-Agent-Skill --scope workspace
+```
+
+You can verify the installation with:
+```bash
+gemini skills list
+```
+
+Then use the skill in your Gemini CLI session, for example:
+> Use the swift concurrency skill and analyze the current project for Swift Concurrency improvements
+
+For more information, see the [Gemini CLI Agent Skills documentation](https://geminicli.com/docs/cli/skills/).
+
 ## What This Skill Offers
 
 This skill gives your AI coding tool comprehensive Swift Concurrency guidance. It can:
