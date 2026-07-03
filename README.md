@@ -80,7 +80,25 @@ pi install https://github.com/AvdLee/Swift-Concurrency-Agent-Skill
 
 The skill will be available automatically in pi sessions.
 
-### Option D: Manual install
+### Option D: Autohand Code
+
+Install the skill globally:
+```bash
+git clone https://github.com/AvdLee/Swift-Concurrency-Agent-Skill.git
+mkdir -p ~/.autohand/skills
+cp -R Swift-Concurrency-Agent-Skill/swift-concurrency ~/.autohand/skills/
+```
+
+Or install it only for the current project:
+```bash
+git clone https://github.com/AvdLee/Swift-Concurrency-Agent-Skill.git
+mkdir -p .autohand/skills
+cp -R Swift-Concurrency-Agent-Skill/swift-concurrency .autohand/skills/
+```
+
+Autohand Code discovers skills from `~/.autohand/skills/` and `.autohand/skills/`.
+
+### Option E: Manual install
 1) **Clone** this repository.  
 2) **Install or symlink** the `swift-concurrency/` folder following your tool’s official skills installation docs (see links below).  
 3) **Use your AI tool** as usual and ask it to use the “swift-concurrency” skill for Swift Concurrency tasks.
@@ -89,6 +107,7 @@ The skill will be available automatically in pi sessions.
 
 Follow your tool’s official documentation, here are a few popular ones:
 - **Codex:** [Where to save skills](https://developers.openai.com/codex/skills/#where-to-save-skills)
+- **Autohand Code:** `~/.autohand/skills/` or `.autohand/skills/`
 - **Claude:** [Using Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)
 - **Cursor:** [Enabling Skills](https://cursor.com/docs/context/skills#enabling-skills)
 
@@ -202,6 +221,5 @@ Created by [Antoine van der Lee](https://www.avanderlee.com), a Swift Concurrenc
 ## License
 
 This skill is open-source and available under the MIT License. See [LICENSE](LICENSE) for details.
-
 
 
