@@ -10,6 +10,8 @@ Expert guidance for any AI coding tool that supports the [Agent Skills open form
 
 Based on the comprehensive [Swift Concurrency Course](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=swift-concurrency-skill), distilled into actionable, concise references for agents.
 
+This repository is packaged as a portable [Agent Plugin](https://agent-plugins.org) (spec 1.0.0): compatible clients discover the skill automatically from the root `plugin.json` manifest and the `skills/` directory. Client-specific manifests for Claude Code, Cursor, Codex, and pi are included as well.
+
 ## Who this is for
 - Teams migrating to Swift 6 / strict concurrency who need safe defaults and quick triage.
 - Developers debugging data races, isolation errors, or flaky async tests.
@@ -80,10 +82,16 @@ pi install https://github.com/AvdLee/Swift-Concurrency-Agent-Skill
 
 The skill will be available automatically in pi sessions.
 
-### Option D: Manual install
+### Option D: Cursor Plugin
+
+Load the plugin from a local clone by placing it in `~/.cursor/plugins/local`, or install it from the Cursor Marketplace once listed. Cursor supports both the portable Agent Plugins manifest (`plugin.json`) and the Cursor Plugin manifest (`.cursor-plugin/plugin.json`) included in this repository.
+
+### Option E: Manual install
 1) **Clone** this repository.  
-2) **Install or symlink** the `swift-concurrency/` folder following your tool’s official skills installation docs (see links below).  
+2) **Install or symlink** the `skills/swift-concurrency/` folder following your tool’s official skills installation docs (see links below).  
 3) **Use your AI tool** as usual and ask it to use the “swift-concurrency” skill for Swift Concurrency tasks.
+
+> Note: the skill folder moved from the repository root to `skills/swift-concurrency/` when adopting the Agent Plugins format. A symlink at the old `swift-concurrency/` path keeps existing local clones and scripts working; it will be removed in the next major version.
 
 #### Where to Save Skills
 
@@ -94,7 +102,7 @@ Follow your tool’s official documentation, here are a few popular ones:
 
 **How to verify**: 
 
-Your agent should reference the triage/playbook in `swift-concurrency/SKILL.md` and jump into the relevant reference file for your error or task.
+Your agent should reference the triage/playbook in `skills/swift-concurrency/SKILL.md` and jump into the relevant reference file for your error or task.
 
 ## What This Skill Offers
 
@@ -159,7 +167,7 @@ This skill gives your AI coding tool comprehensive Swift Concurrency guidance. I
 ## Skill Structure
 
 ```
-swift-concurrency/
+skills/swift-concurrency/
 ├── SKILL.md                # Main skill file with decision trees
 └── references/
     ├── _index.md               # TODO: Add description

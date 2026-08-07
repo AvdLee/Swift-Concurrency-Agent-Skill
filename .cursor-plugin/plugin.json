@@ -6,8 +6,10 @@
     "name": "Antoine van der Lee",
     "email": "contact@avanderlee.com"
   },
+  "homepage": "https://github.com/AvdLee/Swift-Concurrency-Agent-Skill",
   "repository": "https://github.com/AvdLee/Swift-Concurrency-Agent-Skill",
   "license": "MIT",
+  "logo": "skills/swift-concurrency/assets/logo.svg",
   "keywords": [
     "swift",
     "concurrency",
@@ -19,13 +21,12 @@
     "threading",
     "task-groups",
     "main-actor",
-    "core-data",
     "migration",
     "ios",
     "macos",
     "apple"
   ],
   "skills": [
-    "./skills/swift-concurrency"
+    "skills/swift-concurrency"
   ]
 }
