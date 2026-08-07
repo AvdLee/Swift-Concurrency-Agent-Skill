@@ -9,7 +9,7 @@ author:
   email: contact@avanderlee.com
 repository: https://github.com/AvdLee/Swift-Concurrency-Agent-Skill
 license: MIT
-logo: skills/swift-concurrency/assets/logo.svg
+logo: skills/swift-concurrency/assets/logo.png
 keywords:
   - swift
   - concurrency
