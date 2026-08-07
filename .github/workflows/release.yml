@@ -68,17 +68,21 @@ jobs:
             exit 1
           fi
 
-      - name: Bump plugin.json version
+      - name: Bump manifest versions
         run: |
           set -euo pipefail
 
-          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > .claude-plugin/plugin.json.tmp
-          if [ -s .claude-plugin/plugin.json.tmp ]; then
-            mv .claude-plugin/plugin.json.tmp .claude-plugin/plugin.json
-          else
-            echo "Error: Failed to generate updated .claude-plugin/plugin.json"
-            exit 1
-          fi
+          for manifest in plugin.json .claude-plugin/plugin.json .cursor-plugin/plugin.json; do
+            jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
+            if [ -s "$manifest.tmp" ]; then
+              mv "$manifest.tmp" "$manifest"
+            else
+              echo "Error: Failed to generate updated $manifest"
+              exit 1
+            fi
+          done
+
+          sed -i -E "s/^version: \".*\"$/version: \"$VERSION\"/" agents/openai.yaml
 
       - name: Bump marketplace.json versions
         run: |
@@ -96,7 +100,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet .claude-plugin/plugin.json .claude-plugin/marketplace.json; then
+          version_files="plugin.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .cursor-plugin/plugin.json agents/openai.yaml"
+          if git diff --quiet $version_files; then
             echo "Error: No changes detected after version bump. Is the repo already at version $VERSION?"
             exit 1
           fi

@@ -1,6 +1,6 @@
 {
   "keywords": ["pi-package"],
   "pi": {
-    "skills": ["./swift-concurrency"]
+    "skills": ["./skills/swift-concurrency"]
   }
 }

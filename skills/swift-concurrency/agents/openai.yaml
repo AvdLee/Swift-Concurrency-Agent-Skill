@@ -1,0 +1,6 @@
+interface:
+  display_name: "Swift Concurrency"
+  short_description: "Diagnose data races, adopt async/await and actors, and guide Swift 6 migration."
+  icon_small: "./assets/logo-small.png"
+  icon_large: "./assets/logo.png"
+  brand_color: "#F05138"
