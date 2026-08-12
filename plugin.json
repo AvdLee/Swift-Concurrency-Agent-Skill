@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "swift-concurrency",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Expert guidance on Swift Concurrency best practices, patterns, and implementation. Covers async/await, actors, tasks, Sendable conformance, data race prevention, and Swift 6 migration strategies.",
   "author": {
     "name": "Antoine van der Lee",

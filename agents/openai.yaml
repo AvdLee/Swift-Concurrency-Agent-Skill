@@ -1,5 +1,5 @@
 name: swift-concurrency
-version: "2.2.0"
+version: "2.3.0"
 description: >-
   Expert guidance on Swift Concurrency best practices, patterns, and
   implementation. Covers async/await, actors, tasks, Sendable conformance,
