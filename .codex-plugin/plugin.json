@@ -34,7 +34,7 @@
     "longDescription": "Expert guidance on Swift Concurrency best practices, patterns, and implementation. Covers async/await, actors, tasks, Sendable conformance, data race prevention, and Swift 6 migration strategies.",
     "developerName": "Antoine van der Lee",
     "category": "Developer Tools",
-    "websiteURL": "https://www.avanderlee.com",
+    "websiteURL": "https://github.com/AvdLee/Swift-Concurrency-Agent-Skill",
     "defaultPrompt": [
       "Migrate this class to Swift 6 strict concurrency.",
       "Diagnose the data race warnings in this file and fix them.",
@@ -43,7 +43,6 @@
     "brandColor": "#F05138",
     "composerIcon": "./skills/swift-concurrency/assets/logo-small.png",
     "logo": "./skills/swift-concurrency/assets/logo.png",
-    "privacyPolicyURL": "https://www.avanderlee.com/privacy-policy/",
     "termsOfServiceURL": "https://github.com/AvdLee/Swift-Concurrency-Agent-Skill/blob/main/LICENSE"
   }
 }
