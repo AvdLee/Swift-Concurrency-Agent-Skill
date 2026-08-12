@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for manifest in plugin.json .claude-plugin/plugin.json .cursor-plugin/plugin.json; do
+          for manifest in plugin.json .claude-plugin/plugin.json .codex-plugin/plugin.json .cursor-plugin/plugin.json; do
             jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
             if [ -s "$manifest.tmp" ]; then
               mv "$manifest.tmp" "$manifest"
@@ -100,7 +100,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          version_files="plugin.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .cursor-plugin/plugin.json agents/openai.yaml"
+          version_files="plugin.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .codex-plugin/plugin.json .cursor-plugin/plugin.json agents/openai.yaml"
           if git diff --quiet $version_files; then
             echo "No changes detected — version files already at $VERSION. Skipping commit."
           else
