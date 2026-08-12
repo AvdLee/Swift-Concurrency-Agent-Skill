@@ -96,7 +96,7 @@ final class DataProcessor {
 ```swift
 // ✅ Use await to cross isolation boundaries
 func showProgress() async {
-    let processor = DataProcessor()
+    let processor = await DataProcessor() // init is BackgroundActor-isolated too
     let current = await processor.progress
     print("Progress: \(current)")
 }
