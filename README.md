@@ -169,6 +169,7 @@ skills/swift-concurrency/
     ├── linting.md              # Linting rules for strict concurrency
     ├── memory-management.md    # Retain cycles, weak self, isolated deinit
     ├── migration.md            # Step-by-step Swift 6 migration guide
+    ├── observation.md          # @Observable isolation, observation tracking, Sendable snapshots
     ├── performance.md          # Optimization with Xcode Instruments
     ├── sendable.md             # Isolation domains and Sendable conformance
     ├── tasks.md                # Task lifecycle, cancellation, priorities
