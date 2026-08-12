@@ -332,6 +332,47 @@ extension PersonViewModel: @MainActor Equatable {
 
 > **Course Deep Dive**: This topic is covered in detail in [Lesson 5.6: Adding isolated conformance to protocols](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=lesson-reference)
 
+### `SendableMetatype` Error with Isolated Conformances
+
+Isolated conformances **cannot** satisfy a `SendableMetatype` requirement. This surfaces when you pass `MyClass.self` to a generic function whose type parameter requires `Sendable`.
+
+```swift
+protocol P {
+    static func doSomething()
+}
+
+func doSomethingStatic<T: P & SendableMetatype>(_ type: T.Type) { }  // explicitly requires a Sendable type/metatype
+
+@MainActor
+class C { }
+
+extension C: @MainActor P {
+    static func doSomething() { }
+}
+
+@MainActor
+func test(c: C) {
+    doSomethingStatic(C.self)
+    // ❌ main actor-isolated conformance of 'C' to 'P' cannot satisfy
+    //    conformance requirement for a 'Sendable' type parameter
+}
+```
+
+**Fix options**:
+
+1. Remove actor isolation from the original conformance if the protocol requirements don't access actor state:
+
+```swift
+@MainActor
+class C: P {
+    nonisolated static func doSomething() { }  // ✅ Non-isolated requirement on a non-isolated conformance
+}
+```
+
+2. Avoid passing the metatype across isolation boundaries — call the static method directly rather than routing through the generic function.
+
+3. Make the generic function actor-aware so it accepts an isolated conformance (requires changing the callee's signature).
+
 ## Actor Reentrancy
 
 **Critical**: State can change between suspension points.

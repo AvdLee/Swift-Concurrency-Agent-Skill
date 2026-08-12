@@ -3,7 +3,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 const README_PATH = path.join(process.cwd(), "README.md");
-const REFERENCES_DIR = path.join(process.cwd(), "swift-concurrency/references");
+const REFERENCES_DIR = path.join(process.cwd(), "skills/swift-concurrency/references");
 const DEFAULT_BASE_REF = "main";
 
 const execGit = (command) => execSync(command, { encoding: "utf8" }).trim();
@@ -23,7 +23,7 @@ const getBaseRef = (eventPayload) =>
 
 const getReferenceChanges = (baseRef) => {
   const diff = execGit(
-    `git diff origin/${baseRef}...HEAD --name-status -- "swift-concurrency/references"`
+    `git diff origin/${baseRef}...HEAD --name-status -- "skills/swift-concurrency/references"`
   );
   return diff;
 };
@@ -48,7 +48,7 @@ const buildStructureBlock = (referenceFiles, existingDescriptions) => {
   );
 
   const lines = [];
-  lines.push("swift-concurrency/");
+  lines.push("skills/swift-concurrency/");
   const skillDescription =
     existingDescriptions.get("SKILL.md") || "Main skill file with decision trees";
   lines.push(

@@ -34,6 +34,31 @@ func synchronousMethod() {
 }
 ```
 
+
+### Task entry isolation
+
+`Task { ... }` inherits the enclosing isolation domain. This is especially easy to miss in modules that use `defaultIsolation(MainActor.self)` because bare tasks then start on `@MainActor` by default.
+
+Choose task entry isolation using the synchronous prefix rule (everything before the first `await`):
+- If the prefix needs main-actor work, keep inherited `@MainActor` entry.
+- If the prefix does not need main actor, prefer `Task { @concurrent in ... }` and hop back only for UI mutation.
+
+```swift
+// ❌ Prefix has no main-actor work; first await hops away
+Task {
+    await someActor.refresh()
+}
+
+// ✅ Prefix needs @MainActor; keep inherited main start
+Task {
+    print("debug")        // trivial non-main line rides along
+    self.isLoading = true  // main-actor state before first await
+    await fetchData()
+}
+```
+
+For deeper guidance and expanded examples, see `threading.md#choosing-task-entry-isolation`.
+
 ## Task References
 
 Storing a reference is optional but enables cancellation and result waiting:
@@ -618,6 +643,7 @@ let profile = Profile(
 - Using `Task.detached` just to "make it background."
 - Ignoring cancellation in long-running operations.
 - Keeping a stored task forever without a clear owner or cleanup path.
+- Picking entry isolation from the enclosing context rather than the task's synchronous prefix — `Task { await someActor.x() }` from a `@MainActor` context should be `Task { @concurrent in ... }`; a `Task` whose prefix mutates `@MainActor` state should stay on inherited `@MainActor` even if it also has a `print`.
 - Priorities are hints, not guarantees. The system automatically elevates priority to prevent inversion (e.g., a high-priority task awaiting `.value` of a lower-priority task). Do not rely on priority for correctness.
 
 ## Best Practices

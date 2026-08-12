@@ -141,6 +141,8 @@ let data = await fetchData() // Potential suspension
 2. **State can change** - mutable state may be modified during suspension
 3. **Actor reentrancy** - other tasks can access actor during suspension
 
+The same entry-isolation rule applies to any unstructured task: choose startup isolation by what the synchronous prefix needs. If nothing before the first `await` needs the main actor—whether that first operation is `Task.sleep`, an actor hop, a `print`, or a Sendable computation—prefer `Task { @concurrent in ... }` and hop back with `MainActor.run` only for the UI mutation. If the synchronous prefix already needs main actor for one statement, keep nearby cheap lines on main with it instead of splitting them out.
+
 ### Actor reentrancy example
 
 ```swift
@@ -189,6 +191,49 @@ func deposit(amount: Int) async {
 **Rule**: Don't mutate actor state after suspension points.
 
 > **Course Deep Dive**: This topic is covered in detail in [Lesson 7.3: Understanding Task suspension points](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=lesson-reference)
+
+
+## Choosing Task entry isolation
+
+For unstructured `Task { ... }`, choose entry isolation based on the synchronous prefix (everything before the first `await`), not on where the task was created.
+
+Two common reasons a bare `Task { ... }` starts on `@MainActor`:
+- The task is spawned from a `@MainActor` context.
+- The module enables default main-actor isolation (for example, `defaultIsolation(MainActor.self)`).
+
+Rule:
+- If the synchronous prefix contains any main-actor work, keep inherited main-actor entry.
+- If the synchronous prefix contains no main-actor work, start with `Task { @concurrent in ... }` and hop back to `MainActor` only when needed.
+
+```swift
+// ❌ Synchronous prefix is empty; first work hops away
+Task {
+    await hopToOtherIsolationDomain()
+}
+
+// ❌ Synchronous prefix is only `print` (trivial, non-main); first await hops away
+Task {
+    print("Also not main-thread-bound")
+    await hopToOtherIsolationDomain()
+}
+
+// ✅ Start off the main actor, hop back only for UI work
+Task { @concurrent in
+    await hopToOtherIsolationDomain()
+    await MainActor.run { updateUI() }
+}
+
+// ✅ Synchronous prefix DOES contain main-actor work — keep inheritance
+Task {
+    print("debug")              // trivial, non-main — rides along
+    self.isLoading = true       // needs @MainActor, before any await
+    await fetchData()
+}
+```
+
+The delayed-retry `Task.sleep` pattern (see `performance.md` "Match Task entry isolation to its synchronous prefix") is a specialization of this same rule: the wait is usually not UI-owned, while the final mutation is.
+
+Note that `Task { @concurrent in ... }` changes the closure's isolation, so any capture of non-Sendable state from the enclosing actor must move inside the `MainActor.run { ... }` hop, or be captured weakly (e.g., `[weak self]` plus a `guard let self`) before being used there. The examples above stay safe by keeping `self` use inside `MainActor.run`. If the body needs to touch non-Sendable state directly, see `sendable.md` before reaching for `@concurrent`.
 
 ## Thread Execution Patterns
 
@@ -472,6 +517,7 @@ Instead of asking "what thread should this run on?" ask "what isolation domain s
 - Debugging correctness by thread ID instead of by isolation and ordering.
 - Treating `await` as a blocking call — it suspends the task, freeing the thread.
 - Mapping each `Task` to a conceptual thread.
+- Picking task entry isolation by the enclosing context instead of by the task's synchronous prefix. A `Task { ... }` from `@MainActor` whose first `await` immediately hops away (with no main-actor work before it) should usually be `Task { @concurrent in ... }`.
 
 ## Performance Insights
 

@@ -10,6 +10,8 @@ Expert guidance for any AI coding tool that supports the [Agent Skills open form
 
 Based on the comprehensive [Swift Concurrency Course](https://www.swiftconcurrencycourse.com?utm_source=github&utm_medium=agent-skill&utm_campaign=swift-concurrency-skill), distilled into actionable, concise references for agents.
 
+This repository is packaged as a portable [Agent Plugin](https://agent-plugins.org) (spec 1.0.0): compatible clients discover the skill automatically from the root `plugin.json` manifest and the `skills/` directory. Client-specific manifests for Claude Code, Cursor, Codex, and pi are included as well, and the plugin is published in the OpenAI Plugins Directory for ChatGPT and Codex.
+
 ## Who this is for
 - Teams migrating to Swift 6 / strict concurrency who need safe defaults and quick triage.
 - Developers debugging data races, isolation errors, or flaky async tests.
@@ -33,7 +35,15 @@ For more information, visit the [skills.sh platform page](https://skills.sh/avdl
 Then use the skill in your AI agent, for example:  
 > Use the swift concurrency skill and analyze the current project for Swift Concurrency improvements
 
-### Option B: Claude Code Plugin
+### Option B: ChatGPT & Codex (OpenAI Plugins Directory)
+
+This plugin is published in the universal OpenAI Plugins Directory shared by ChatGPT and Codex:
+
+1. In the ChatGPT desktop app, select **Codex** (or ChatGPT with **Work** enabled), or use the plugin browser in Codex CLI.
+2. Open **Plugins** and search for "Swift Concurrency".
+3. Install the plugin. The skill becomes available in new chats and sessions.
+
+### Option C: Claude Code Plugin
 
 #### Personal Usage
 
@@ -71,21 +81,17 @@ To automatically provide this Skill to everyone working in a repository, configu
 
 When team members open the project, Claude Code will prompt them to install the Skill.
 
-### Option C: Manual install
-1) **Clone** this repository.  
-2) **Install or symlink** the `swift-concurrency/` folder following your tool’s official skills installation docs (see links below).  
-3) **Use your AI tool** as usual and ask it to use the “swift-concurrency” skill for Swift Concurrency tasks.
+### Option D: Cursor Plugin
 
-#### Where to Save Skills
+Load the plugin from a local clone by placing it in `~/.cursor/plugins/local`, or install it from the Cursor Marketplace once listed. Cursor supports both the portable Agent Plugins manifest (`plugin.json`) and the Cursor Plugin manifest (`.cursor-plugin/plugin.json`) included in this repository.
 
-Follow your tool’s official documentation, here are a few popular ones:
-- **Codex:** [Where to save skills](https://developers.openai.com/codex/skills/#where-to-save-skills)
-- **Claude:** [Using Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)
-- **Cursor:** [Enabling Skills](https://cursor.com/docs/context/skills#enabling-skills)
+### Using another tool?
+
+See [INSTALLATION.md](INSTALLATION.md) for all other installation options: pi, Gemini CLI, Autohand Code, and manual installation.
 
 **How to verify**: 
 
-Your agent should reference the triage/playbook in `swift-concurrency/SKILL.md` and jump into the relevant reference file for your error or task.
+Your agent should reference the triage/playbook in `skills/swift-concurrency/SKILL.md` and jump into the relevant reference file for your error or task.
 
 ## What This Skill Offers
 
@@ -150,12 +156,12 @@ This skill gives your AI coding tool comprehensive Swift Concurrency guidance. I
 ## Skill Structure
 
 ```
-swift-concurrency/
+skills/swift-concurrency/
 ├── SKILL.md                # Main skill file with decision trees
 └── references/
-    ├── _index.md               # TODO: Add description
+    ├── _index.md               # Quick navigation index for all reference files
     ├── actors.md               # Actor isolation, global actors, reentrancy
-    ├── async-algorithms.md     # TODO: Add description
+    ├── async-algorithms.md     # AsyncAlgorithms operators: debounce, merge, zip, Combine migration
     ├── async-await-basics.md   # Fundamentals of async/await syntax
     ├── async-sequences.md      # AsyncSequence and AsyncStream patterns
     ├── core-data.md            # Core Data integration patterns

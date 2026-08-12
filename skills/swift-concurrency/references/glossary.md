@@ -52,6 +52,7 @@ An opt-out to prevent “sending” non-Sendable values across isolation while s
 ## @concurrent (Swift 6.2+ behavior)
 
 An attribute used to explicitly opt a nonisolated async function into concurrent execution (i.e., not inheriting the caller’s actor). It is used during migration when enabling `NonisolatedNonsendingByDefault`.
+Also valid on `Task { @concurrent in ... }` to opt the task body out of the enclosing actor's isolation; pick this when the task's synchronous prefix (everything before the first `await`) does not need the main actor.
 
 ## @preconcurrency
 
