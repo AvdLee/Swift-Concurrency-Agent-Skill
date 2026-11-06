@@ -323,12 +323,14 @@ final class Counter {
 
 ## Passing @Observable Across Isolation Boundaries
 
-`@Observable` classes are reference types and are **not** implicitly `Sendable`. Passing them across isolation boundaries triggers a compiler error in Swift 6.
+`@Observable` alone does not make a class `Sendable`. A class isolated to a global actor, such as `@MainActor`, is implicitly `Sendable` because the actor protects access to its mutable state ([SE-0316](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0316-global-actors.md#using-global-actors-on-a-type)).
 
-### Problem
+### Read an Actor-Isolated Model via `await`
+
+Passing an actor-isolated model is safe; reading its properties from another actor requires `await`:
 
 ```swift
-// ❌ Compiler error in Swift 6
+// ✅ Settings is implicitly Sendable through @MainActor isolation
 @MainActor
 @Observable
 final class Settings {
@@ -336,15 +338,16 @@ final class Settings {
 }
 
 actor SyncEngine {
-    func apply(settings: Settings) {
-        // Error: Sending value of non-Sendable type 'Settings' risks data races
+    func apply(settings: Settings) async {
+        let theme = await settings.theme
+        print("Applying theme: \(theme)")
     }
 }
 ```
 
-### Solution 1: Pass a Sendable Snapshot
+### Pass a Sendable Snapshot
 
-Extract the values you need into a `Sendable` value type:
+When the receiver needs an independent copy of the values rather than live actor-isolated state, extract them into a `Sendable` value type:
 
 ```swift
 struct SettingsSnapshot: Sendable {
@@ -358,21 +361,11 @@ actor SyncEngine {
     }
 }
 
-// At the call site
-let snapshot = SettingsSnapshot(theme: settings.theme)
-await syncEngine.apply(snapshot: snapshot)
-```
-
-### Solution 2: Read via `await` Without Transferring Ownership
-
-If you only need to read a few properties, access them across isolation without passing the object:
-
-```swift
-actor SyncEngine {
-    func sync(with model: UserModel) async {
-        let name = await model.name  // Read across boundary
-        // Use name locally
-    }
+// At the call site, read settings on MainActor
+@MainActor
+func sync(settings: Settings, with syncEngine: SyncEngine) async {
+    let snapshot = SettingsSnapshot(theme: settings.theme)
+    await syncEngine.apply(snapshot: snapshot)
 }
 ```
 
@@ -404,7 +397,7 @@ For full Combine-to-Concurrency examples — including `@Published` + `debounce`
 | `Actor-isolated property 'x' can not be mutated from a Sendable closure` | Writing to actor-isolated property inside `Task.detached` | Read/write through `await` on the owning actor |
 | `Reference to property 'x' in closure requires explicit use of 'self'` | Standard Swift capture rule, not concurrency-specific | Add `self.` prefix |
 | `Capture of non-Sendable type 'X' in a '@Sendable' closure` when adding work to a task group | No isolation on the `@Observable` class, so it isn't `Sendable` | Apply `@MainActor` or a global actor to the class so it is isolated and access goes through `await` |
-| `Sending value of non-Sendable type 'MyModel' risks causing data races` | Passing `@Observable` object across isolation boundaries | Pass a `Sendable` value-type snapshot instead of the object |
+| `Sending value of non-Sendable type 'MyModel' risks causing data races` | Passing a shared, nonisolated `@Observable` object across isolation boundaries | Pass a `Sendable` value-type snapshot instead of the object |
 
 ---
 
